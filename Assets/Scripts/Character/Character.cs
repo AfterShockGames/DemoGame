@@ -1,40 +1,46 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
+using DemoGame.Camera;
 
-/// <summary>
-/// Central Character script for simple behavior common to all characters
-/// </summary>
-[RequireComponent(typeof(NetworkIdentity))]
-public class Character : NetworkBehaviour {
-
-    [SerializeField]
-    public GameObject cameraPointer;
-
-    void Start()
+namespace DemoGame.Character
+{
+    /// <summary>
+    /// Central Character script for simple behavior common to all characters
+    /// </summary>
+    [RequireComponent(typeof(NetworkIdentity))]
+    public class Character : NetworkBehaviour
     {
-        GetComponent<CharacterMovement>().enabled = false;
-        GetComponent<CharacterRotation>().enabled = false;
-        if (IsLocalPlayer)
+
+        [SerializeField]
+        public GameObject cameraPointer;
+
+        void Start()
         {
-            //Make the camera start following this character
-            Camera.main.GetComponent<CameraDispatcher>().SetCurrentCharacterTarget(cameraPointer);
-            //GetComponent<CharacterMovement>().enabled = true;
-            //GetComponent<CharacterRotation>().enabled = true;
+            GetComponent<Movement>().enabled = false;
+            GetComponent<Rotation>().enabled = false;
+            if (IsLocalPlayer)
+            {
+                //Make the camera start following this character
+                UnityEngine.Camera.main.GetComponent<Dispatcher>().SetCurrentCharacterTarget(cameraPointer);
+                //GetComponent<CharacterMovement>().enabled = true;
+                //GetComponent<CharacterRotation>().enabled = true;
+            }
+
+            if (isServer)
+            {
+                GetComponent<Movement>().enabled = true;
+                GetComponent<Rotation>().enabled = true;
+            }
         }
 
-        if (isServer)
+        public bool IsLocalPlayer
         {
-            GetComponent<CharacterMovement>().enabled = true;
-            GetComponent<CharacterRotation>().enabled = true;
+            get
+            {
+                return GetComponent<NetworkIdentity>().isLocalPlayer;
+            }
         }
-    }
 
-    public bool IsLocalPlayer
-    {
-        get {
-            return GetComponent<NetworkIdentity>().isLocalPlayer;
-        }
     }
-
 }
