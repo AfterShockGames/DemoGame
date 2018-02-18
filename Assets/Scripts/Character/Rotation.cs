@@ -9,11 +9,11 @@ namespace DemoGame.Character
     public class Rotation : MonoBehaviour
     {
 
-        private Input input;
+        private Input.InputManager input;
 
         void Awake()
         {
-            input = GetComponent<Input>();
+            input = GetComponent<Input.InputManager>();
         }
 
         /// <summary>

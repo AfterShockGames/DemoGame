@@ -21,7 +21,7 @@ namespace DemoGame.Character
         public float gravityAccel = 9f;
 
         private FixedController controller;
-        private Input input;
+        private Input.InputManager input;
         private Vector3 moveDirection = Vector3.zero;
         private Vector3 lookDirection;
 
@@ -29,7 +29,7 @@ namespace DemoGame.Character
 
         void Awake()
         {
-            input = GetComponent<Input>();
+            input = GetComponent<Input.InputManager>();
             controller = GetComponent<FixedController>();
             lookDirection = transform.forward;
         }

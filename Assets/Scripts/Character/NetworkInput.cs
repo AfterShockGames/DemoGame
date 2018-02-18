@@ -39,12 +39,12 @@ namespace DemoGame.Character
         //Others characters scripts (see each script to know what it does)
         private MouseAim cameraMouseAim;
         private AimPoint cameraAimPoint;
-        private Input characterInput;
+        private Input.InputManager characterInput;
         private Movement characterMovement;
         private Rotation characterRotation;
 
         private float nextSendTime;                             //CLIENT SIDE time when the client must send data to server
-        private Queue<Input.InputState> inputStates;   //CLIENT SIDE input states not ack by server
+        private Queue<Input.State> inputStates;   //CLIENT SIDE input states not ack by server
 
         private Vector3 serverLastRecvPosition;         //CLIENT SIDE last received pos from server
         private Vector3 serverLastPredPosition;         //CLIENT SIDE last predicted pos from server
@@ -53,12 +53,12 @@ namespace DemoGame.Character
 
         void Start()
         {
-            inputStates = new Queue<Input.InputState>();
+            inputStates = new Queue<Input.State>();
 
             cameraMouseAim = UnityEngine.Camera.main.GetComponent<MouseAim>();
             cameraAimPoint = UnityEngine.Camera.main.GetComponent<AimPoint>();
 
-            characterInput = GetComponent<Input>();
+            characterInput = GetComponent<Input.InputManager>();
             characterMovement = GetComponent<Movement>();
             characterRotation = GetComponent<Rotation>();
         }
@@ -106,7 +106,7 @@ namespace DemoGame.Character
         /// </summary>
         /// <param name="newInputs"></param>
         [Command(channel = 1)]
-        void CmdSetServerInput(Input.InputState[] newInputs, Vector3 newClientPos)
+        void CmdSetServerInput(Input.State[] newInputs, Vector3 newClientPos)
         {
             int index = 0;
 
@@ -174,7 +174,7 @@ namespace DemoGame.Character
                 bool loop = true;
                 while (loop && inputStates.Count > 0)
                 {
-                    Input.InputState state = inputStates.Peek();
+                    Input.State state = inputStates.Peek();
                     if (state.inputState <= clientAckState)
                     {
                         inputStates.Dequeue();
@@ -186,7 +186,7 @@ namespace DemoGame.Character
                 }
 
                 //Client: store actual Character position, rotation and velocity along with current input
-                Input.InputState oldState = characterInput.currentInput;
+                Input.State oldState = characterInput.currentInput;
                 Vector3 oldPos = transform.position;
                 Quaternion oldRot = transform.rotation;
 
@@ -197,7 +197,7 @@ namespace DemoGame.Character
                 transform.rotation = serverLastRecvRotation;
 
                 //Client: replay all input based on new correct position
-                foreach (Input.InputState state in inputStates)
+                foreach (Input.State state in inputStates)
                 {
                     //Set the input
                     characterInput.currentInput = state;
