@@ -16,6 +16,7 @@ namespace DemoGame.Network
                 if (instance == null)
                 {
                     instance = FindObjectOfType<NetworkManager>();
+                    //instance.useWebSockets = true;
                 }
                 return instance;
             }

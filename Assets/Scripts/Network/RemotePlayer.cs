@@ -63,7 +63,7 @@ namespace DemoGame.Network
                 nextUpdate = Time.time + GetNetworkSendInterval();
 
                 byte error;
-                this.ping = (short)NetworkTransport.GetCurrentRtt(hostID, connID, out error);
+                this.ping = (short)NetworkTransport.GetCurrentRTT(hostID, connID, out error);
             }
 
             //TODO remove spawn code
