@@ -3,10 +3,10 @@ using UnityEngine.Networking;
 using System.Collections;
 using DemoGame.Camera;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     /// <summary>
-    /// Central Character script for simple behavior common to all characters
+    /// Central Player script for simple behavior common to all characters
     /// </summary>
     [RequireComponent(typeof(NetworkIdentity))]
     public class Character : NetworkBehaviour

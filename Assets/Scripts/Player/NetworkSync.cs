@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     /// <summary>
     /// For local player, dispatch received position to CharacterNetworkInput
@@ -16,7 +16,7 @@ namespace DemoGame.Character
         NetworkInterpolation networkInterpolation;     //The interpolation component
 
         [SyncVar]
-        private CharacterState serverLastState;                 //SERVER: Store last state
+        private State serverLastState;                 //SERVER: Store last state
 
         void Start()
         {
@@ -29,7 +29,7 @@ namespace DemoGame.Character
         /// <param name="clientInputState"></param>
         void ServerStateReceived(int clientInputState)
         {
-            CharacterState state = new CharacterState();
+            State state = new State();
             state.state = clientInputState;
             state.position = transform.position;
             state.rotation = transform.rotation;
@@ -66,7 +66,7 @@ namespace DemoGame.Character
         /// <param name="initialState"></param>
         public override void OnDeserialize(NetworkReader reader, bool initialState)
         {
-            CharacterState state = new CharacterState();
+            State state = new State();
 
             state.state = reader.ReadInt32();
             state.position = reader.ReadVector3();
@@ -92,13 +92,6 @@ namespace DemoGame.Character
                     networkInterpolation.ReceiveState(state);
                 }
             }
-        }
-
-        public struct CharacterState
-        {
-            public int state;
-            public Vector3 position;
-            public Quaternion rotation;
         }
     }
 }

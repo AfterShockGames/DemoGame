@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     public class FixedController : SuperCharacterController
     {

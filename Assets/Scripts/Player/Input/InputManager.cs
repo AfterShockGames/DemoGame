@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using DemoGame.Camera;
 
-namespace DemoGame.Character.Input
+namespace DemoGame.Player.Input
 {
     /// <summary>
     /// Fetches local input and store it

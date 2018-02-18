@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DemoGame.Character.Input
+namespace DemoGame.Player.Input
 {
     /// <summary>
     /// Internal an clean struct to store and transmit inout states

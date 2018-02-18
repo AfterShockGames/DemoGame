@@ -1,14 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     public class NetworkInterpolation : MonoBehaviour
     {
 
         //keep at least 20 buffered state to interpolate from
         int bufferedStatesCount = 0;
-        NetworkSync.CharacterState[] bufferedStates = new NetworkSync.CharacterState[20];
+        State[] bufferedStates = new State[20];
         float lastBufferedStateTime = 0;
 
         //Add an extra lag of 200 ms (4 commands back in time)
@@ -23,7 +23,7 @@ namespace DemoGame.Character
         /// Called when a state is received from server
         /// </summary>
         /// <param name="newState"></param>
-        public void ReceiveState(NetworkSync.CharacterState newState)
+        public void ReceiveState(State newState)
         {
             //Other Clients: Shift buffer and store at first position
             for (int i = bufferedStates.Length - 1; i >= 1; i--)
@@ -59,9 +59,9 @@ namespace DemoGame.Character
                 if (stateTime <= Time.time - interpolationBackTime || i == bufferedStatesCount - 1)
                 {
                     //Get one step after and one before the time
-                    NetworkSync.CharacterState afterState = bufferedStates[Mathf.Max(i - 1, 0)];
+                    State afterState = bufferedStates[Mathf.Max(i - 1, 0)];
                     float afterStateTime = lastBufferedStateTime - (i - 1) * updateRate;
-                    NetworkSync.CharacterState beforeState = bufferedStates[i];
+                    State beforeState = bufferedStates[i];
                     float beforeStateTime = lastBufferedStateTime - i * updateRate; ;
 
                     // Use the time between the two slots to determine if interpolation is necessary

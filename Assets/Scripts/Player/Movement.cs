@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     /// <summary>
     /// Manages caracter movement according to CharacterInput values

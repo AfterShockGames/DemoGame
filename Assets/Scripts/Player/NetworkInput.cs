@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DemoGame.Camera;
 
-namespace DemoGame.Character
+namespace DemoGame.Player
 {
     /// <summary>
     /// This script manage the following parts of the communication
@@ -158,7 +158,7 @@ namespace DemoGame.Character
         /// <param name="serverRecvState"></param>
         /// <param name="serverRecvPosition"></param>
         /// <param name="serverRecvRotation"></param>
-        void ServerState(NetworkSync.CharacterState characterState)
+        void ServerState(State characterState)
         {
             int serverRecvState = characterState.state;
             Vector3 serverRecvPosition = characterState.position;
@@ -185,7 +185,7 @@ namespace DemoGame.Character
                     }
                 }
 
-                //Client: store actual Character position, rotation and velocity along with current input
+                //Client: store actual Player position, rotation and velocity along with current input
                 Input.State oldState = characterInput.currentInput;
                 Vector3 oldPos = transform.position;
                 Quaternion oldRot = transform.rotation;
