@@ -67,16 +67,18 @@ namespace DemoGame.Character
                 actualSpeed = runSpeed;
             }
             Vector3 movement = Vector3.MoveTowards(moveDirection, LocalMovement() * actualSpeed, Mathf.Infinity);
-
-            //Add jump velocity if jumping
+            
             if (input.currentInput.inputJump && AcquiringGround())
             {
+                //Add jump velocity if jumping
+
                 controller.DisableClamping();
                 movement.y = moveDirection.y + CalculateJumpVelocity();
             }
-            //Calculate gravity acceleration toward ground
             else if (lastGround > 0)
             {
+                //Calculate gravity acceleration toward ground
+
                 controller.DisableClamping();
                 movement.y = moveDirection.y - gravityAccel * controller.deltaTime;
             }
