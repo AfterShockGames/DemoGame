@@ -18,13 +18,13 @@ namespace DemoGame.Network
         private GameObject characterPrefab;
 
         [SyncVar]
-        public string displayName = "unnamed";
+        public string DisplayName = "unnamed";
 
         [SyncVar]
-        public short ping = 999;
+        public short Ping = 999;
 
         [SyncVar]
-        public NetworkInstanceId spawnedCharacterID;
+        public NetworkInstanceId SpawnedCharacterID;
 
         private int hostID;
         private int connID;
@@ -63,7 +63,7 @@ namespace DemoGame.Network
                 nextUpdate = Time.time + GetNetworkSendInterval();
 
                 byte error;
-                this.ping = (short)NetworkTransport.GetCurrentRTT(hostID, connID, out error);
+                this.Ping = (short)NetworkTransport.GetCurrentRTT(hostID, connID, out error);
             }
 
             //TODO remove spawn code
@@ -80,7 +80,7 @@ namespace DemoGame.Network
         [Command]
         void CmdSetDisplayName(string name)
         {
-            this.displayName = name;
+            this.DisplayName = name;
             this.gameObject.name = "Player " + name;
         }
 
@@ -90,11 +90,11 @@ namespace DemoGame.Network
         [Command]
         public void CmdSpawnPlayer()
         {
-            if (ClientScene.FindLocalObject(spawnedCharacterID) == null)
+            if (ClientScene.FindLocalObject(SpawnedCharacterID) == null)
             {
                 var go = (GameObject)Instantiate(characterPrefab, Vector3.up, Quaternion.identity);
                 NetworkServer.AddPlayerForConnection(GetComponent<NetworkIdentity>().connectionToClient, go, 1);
-                spawnedCharacterID = go.GetComponent<NetworkIdentity>().netId;
+                SpawnedCharacterID = go.GetComponent<NetworkIdentity>().netId;
             }
             else
             {
@@ -104,12 +104,12 @@ namespace DemoGame.Network
 
         public GameObject GetCharacterObject()
         {
-            if (spawnedCharacterID == null)
+            if (SpawnedCharacterID == null)
             {
                 return null;
             }
 
-            return ClientScene.FindLocalObject(spawnedCharacterID);
+            return ClientScene.FindLocalObject(SpawnedCharacterID);
         }
 
     }

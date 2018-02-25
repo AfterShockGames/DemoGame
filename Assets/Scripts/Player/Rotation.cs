@@ -24,7 +24,7 @@ namespace DemoGame.Player
         /// <param name="delta"></param>
         public void RunUpdate(float delta)
         {
-            transform.rotation = Quaternion.Euler(0, input.currentInput.getYaw(), 0);
+            transform.rotation = Quaternion.Euler(0, input.CurrentInput.getYaw(), 0);
         }
     }
 }

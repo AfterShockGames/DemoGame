@@ -78,7 +78,7 @@ namespace DemoGame.Player
                 //Client: gathers user input state
                 characterInput.Parse(localInputState);
                 //Client: add new input to the list
-                inputStates.Enqueue(characterInput.currentInput);
+                inputStates.Enqueue(characterInput.CurrentInput);
                 //Client: execute simulation on local data
                 characterMovement.RunUpdate(Time.fixedDeltaTime);
                 characterRotation.RunUpdate(Time.fixedDeltaTime);
@@ -111,13 +111,13 @@ namespace DemoGame.Player
             int index = 0;
 
             //Server: Input received but state not consecutive with the last one ACKed
-            if (newInputs.Length > 0 && newInputs[index].inputState > clientInputState + 1)
+            if (newInputs.Length > 0 && newInputs[index].InputState > clientInputState + 1)
             {
-                Debug.LogWarning("Missing inputs from " + clientInputState + " to " + newInputs[index].inputState);
+                Debug.LogWarning("Missing inputs from " + clientInputState + " to " + newInputs[index].InputState);
             }
 
             //Server: Discard all old states (state already ACK from the server)
-            while (index < newInputs.Length && newInputs[index].inputState <= clientInputState)
+            while (index < newInputs.Length && newInputs[index].InputState <= clientInputState)
             {
                 index++;
             }
@@ -126,9 +126,9 @@ namespace DemoGame.Player
             while (index < newInputs.Length)
             {
                 //Server: Set the character input
-                characterInput.currentInput = newInputs[index];
+                characterInput.CurrentInput = newInputs[index];
                 //Server: Set the client state number
-                clientInputState = newInputs[index].inputState;
+                clientInputState = newInputs[index].InputState;
                 //Server: Run update for this step according to received input
                 if (!isLocalPlayer)
                 {
@@ -160,9 +160,9 @@ namespace DemoGame.Player
         /// <param name="serverRecvRotation"></param>
         void ServerState(State characterState)
         {
-            int serverRecvState = characterState.state;
-            Vector3 serverRecvPosition = characterState.position;
-            Quaternion serverRecvRotation = characterState.rotation;
+            int serverRecvState = characterState.Frame;
+            Vector3 serverRecvPosition = characterState.Position;
+            Quaternion serverRecvRotation = characterState.Rotation;
 
             //Client: Check that we received a new state from server (not some delayed packet)
             if (clientAckState < serverRecvState)
@@ -175,7 +175,7 @@ namespace DemoGame.Player
                 while (loop && inputStates.Count > 0)
                 {
                     Input.State state = inputStates.Peek();
-                    if (state.inputState <= clientAckState)
+                    if (state.InputState <= clientAckState)
                     {
                         inputStates.Dequeue();
                     }
@@ -186,7 +186,7 @@ namespace DemoGame.Player
                 }
 
                 //Client: store actual Player position, rotation and velocity along with current input
-                Input.State oldState = characterInput.currentInput;
+                Input.State oldState = characterInput.CurrentInput;
                 Vector3 oldPos = transform.position;
                 Quaternion oldRot = transform.rotation;
 
@@ -200,7 +200,7 @@ namespace DemoGame.Player
                 foreach (Input.State state in inputStates)
                 {
                     //Set the input
-                    characterInput.currentInput = state;
+                    characterInput.CurrentInput = state;
                     //Run the simulation
                     characterMovement.RunUpdate(Time.fixedDeltaTime);
                     characterRotation.RunUpdate(Time.fixedDeltaTime);
@@ -210,7 +210,7 @@ namespace DemoGame.Player
                 serverLastPredRotation = transform.rotation;
 
                 //Client: restore initial position, rotation and velocity
-                characterInput.currentInput = oldState;
+                characterInput.CurrentInput = oldState;
                 transform.position = oldPos;
                 transform.rotation = oldRot;
 

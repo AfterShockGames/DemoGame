@@ -10,15 +10,15 @@ namespace DemoGame.Player
     {
 
         [SerializeField]
-        public float speed = 6.0F;
+        public float Speed = 6.0F;
         [SerializeField]
-        public float runSpeed = 8.0F;
+        public float RunSpeed = 8.0F;
         [SerializeField]
-        public float jumpHeight = 8.0F;
+        public float JumpHeight = 8.0F;
         [SerializeField]
-        public float gravity = 20.0F;
+        public float Gravity = 20.0F;
         [SerializeField]
-        public float gravityAccel = 9f;
+        public float GravityAccel = 9f;
 
         private FixedController controller;
         private Input.InputManager input;
@@ -61,14 +61,14 @@ namespace DemoGame.Player
             }
 
             //Calculate movement from keys
-            float actualSpeed = speed;
-            if (input.currentInput.inputRun)
+            float actualSpeed = Speed;
+            if (input.CurrentInput.Run)
             {
-                actualSpeed = runSpeed;
+                actualSpeed = RunSpeed;
             }
             Vector3 movement = Vector3.MoveTowards(moveDirection, LocalMovement() * actualSpeed, Mathf.Infinity);
             
-            if (input.currentInput.inputJump && AcquiringGround())
+            if (input.CurrentInput.Jump && AcquiringGround())
             {
                 //Add jump velocity if jumping
 
@@ -80,11 +80,16 @@ namespace DemoGame.Player
                 //Calculate gravity acceleration toward ground
 
                 controller.DisableClamping();
-                movement.y = moveDirection.y - gravityAccel * controller.deltaTime;
+                movement.y = moveDirection.y - GravityAccel * controller.deltaTime;
             }
             else
             {
                 controller.EnableClamping();
+            }
+
+            if(input.CurrentInput.Fire)
+            {
+                Debug.Log("firing");
             }
 
             moveDirection = movement;
@@ -101,14 +106,14 @@ namespace DemoGame.Player
 
             Vector3 local = Vector3.zero;
 
-            if (input.currentInput.inputHorizontal != 0)
+            if (input.CurrentInput.HorizontalInput != 0)
             {
-                local += right * input.currentInput.getInputHorizontal();
+                local += right * input.CurrentInput.HorizontalInput;
             }
 
-            if (input.currentInput.inputVertical != 0)
+            if (input.CurrentInput.VerticalInput != 0)
             {
-                local += lookDirection * input.currentInput.getInputVertical();
+                local += lookDirection * input.CurrentInput.VerticalInput;
             }
 
             return local.normalized;
@@ -127,7 +132,7 @@ namespace DemoGame.Player
 
         private float CalculateJumpVelocity()
         {
-            return Mathf.Sqrt(0.5f * jumpHeight * gravityAccel);
+            return Mathf.Sqrt(0.5f * JumpHeight * GravityAccel);
         }
 
     }

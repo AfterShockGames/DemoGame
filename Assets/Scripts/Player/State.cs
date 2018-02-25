@@ -4,8 +4,8 @@ namespace DemoGame.Player
 {
     public struct State
     {
-        public int state;
-        public Vector3 position;
-        public Quaternion rotation;
+        public int Frame;
+        public Vector3 Position;
+        public Quaternion Rotation;
     }
 }

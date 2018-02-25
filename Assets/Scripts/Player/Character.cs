@@ -13,7 +13,7 @@ namespace DemoGame.Player
     {
 
         [SerializeField]
-        public GameObject cameraPointer;
+        public GameObject CameraPointer;
 
         void Start()
         {
@@ -22,7 +22,7 @@ namespace DemoGame.Player
             if (IsLocalPlayer)
             {
                 //Make the camera start following this character
-                UnityEngine.Camera.main.GetComponent<Dispatcher>().SetCurrentCharacterTarget(cameraPointer);
+                UnityEngine.Camera.main.GetComponent<Dispatcher>().SetCurrentCharacterTarget(CameraPointer);
                 //GetComponent<CharacterMovement>().enabled = true;
                 //GetComponent<CharacterRotation>().enabled = true;
             }

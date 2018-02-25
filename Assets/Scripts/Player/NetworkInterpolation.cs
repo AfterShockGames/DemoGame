@@ -7,9 +7,9 @@ namespace DemoGame.Player
     {
 
         //keep at least 20 buffered state to interpolate from
-        int bufferedStatesCount = 0;
-        State[] bufferedStates = new State[20];
-        float lastBufferedStateTime = 0;
+        private int bufferedStatesCount = 0;
+        private State[] bufferedStates = new State[20];
+        private float lastBufferedStateTime = 0;
 
         //Add an extra lag of 200 ms (4 commands back in time)
         //This way we always have a good chance to have received one of these 4 commands
@@ -36,7 +36,7 @@ namespace DemoGame.Player
             //Other Clients: Check that states are in good order
             for (int i = 0; i < bufferedStatesCount - 1; i++)
             {
-                if (bufferedStates[i].state < bufferedStates[i + 1].state)
+                if (bufferedStates[i].Frame < bufferedStates[i + 1].Frame)
                 {
                     Debug.LogWarning("Warning, State are in wrong order");
 
@@ -75,8 +75,8 @@ namespace DemoGame.Player
                     }
 
                     //Do the actual interpolation
-                    transform.position = Vector3.Lerp(beforeState.position, afterState.position, t);
-                    transform.rotation = Quaternion.Slerp(beforeState.rotation, afterState.rotation, t);
+                    transform.position = Vector3.Lerp(beforeState.Position, afterState.Position, t);
+                    transform.rotation = Quaternion.Slerp(beforeState.Rotation, afterState.Rotation, t);
                     break;
                 }
             }

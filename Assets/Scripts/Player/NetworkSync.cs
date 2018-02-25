@@ -13,7 +13,7 @@ namespace DemoGame.Player
     public class NetworkSync : NetworkBehaviour
     {
 
-        NetworkInterpolation networkInterpolation;     //The interpolation component
+        private NetworkInterpolation networkInterpolation;     //The interpolation component
 
         [SyncVar]
         private State serverLastState;                 //SERVER: Store last state
@@ -30,9 +30,9 @@ namespace DemoGame.Player
         void ServerStateReceived(int clientInputState)
         {
             State state = new State();
-            state.state = clientInputState;
-            state.position = transform.position;
-            state.rotation = transform.rotation;
+            state.Frame = clientInputState;
+            state.Position = transform.position;
+            state.Rotation = transform.rotation;
 
             //Server: trigger the synchronisation due to SyncVar property
             serverLastState = state;
@@ -52,9 +52,9 @@ namespace DemoGame.Player
         /// <returns></returns>
         public override bool OnSerialize(NetworkWriter writer, bool initialState)
         {
-            writer.Write(serverLastState.state);
-            writer.Write(serverLastState.position);
-            writer.Write(serverLastState.rotation);
+            writer.Write(serverLastState.Frame);
+            writer.Write(serverLastState.Position);
+            writer.Write(serverLastState.Rotation);
 
             return true;
         }
@@ -68,9 +68,9 @@ namespace DemoGame.Player
         {
             State state = new State();
 
-            state.state = reader.ReadInt32();
-            state.position = reader.ReadVector3();
-            state.rotation = reader.ReadQuaternion();
+            state.Frame = reader.ReadInt32();
+            state.Position = reader.ReadVector3();
+            state.Rotation = reader.ReadQuaternion();
 
             //Client: Received a new state for the local player, treat it as an ACK and do reconciliation
             if (isLocalPlayer)
@@ -83,8 +83,8 @@ namespace DemoGame.Player
                 if (initialState)
                 {
                     //Others Clients: First state, just snap to new position
-                    transform.position = state.position;
-                    transform.rotation = state.rotation;
+                    transform.position = state.Position;
+                    transform.rotation = state.Rotation;
                 }
                 else if (networkInterpolation != null)
                 {

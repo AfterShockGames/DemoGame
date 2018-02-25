@@ -10,17 +10,17 @@ namespace DemoGame.Camera
     {
 
         [SerializeField]
-        public float distance = 100;
+        public float Distance = 100;
 
-        public float pitch;
-        public float yaw;
-        public Vector3 aimPoint;
+        public float Pitch;
+        public float Yaw;
+        public Vector3 Point;
 
         public void RunUpdate(float delta)
         {
-            pitch = transform.rotation.eulerAngles.x;
-            yaw = transform.rotation.eulerAngles.y;
-            aimPoint = transform.position + transform.forward * distance;
+            Pitch = transform.rotation.eulerAngles.x;
+            Yaw = transform.rotation.eulerAngles.y;
+            Point = transform.position + transform.forward * Distance;
         }
     }
 }

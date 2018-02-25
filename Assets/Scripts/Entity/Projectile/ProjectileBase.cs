@@ -24,7 +24,7 @@ namespace DemoGame.Entity.Projectile
         internal string _impactParticle;
         internal string _impactParticleResource;
 
-        internal bool _canImpact = false;
+        internal bool _canImpact = true;
 
         internal HashSet<GameObject> _ignoreGameObjects = new HashSet<GameObject>();
 

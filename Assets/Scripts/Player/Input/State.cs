@@ -15,56 +15,75 @@ namespace DemoGame.Player.Input
     [System.Serializable]
     public struct State
     {
-        public int inputState;
+        public int InputState;
 
-        public sbyte inputHorizontal;
-        public sbyte inputVertical;
-        public short pitch;
-        public short yaw;
+        public bool Left;
+        public bool Right;
+        public bool Forward;
+        public bool Backward;
+        public short Pitch;
+        public short Yaw;
 
-        public bool inputJump;
-        public bool inputFire;
-        public bool inputAim;
-        public bool inputRun;
+        public bool Jump;
+        public bool Fire;
+        public bool Aim;
+        public bool Run;
+
+        public float HorizontalInput
+        {
+            get
+            {
+                float horizontalInput = 0f;
+
+                if (Left)
+                {
+                    horizontalInput += -1.0f;
+                }
+                if (Right)
+                {
+                    horizontalInput += 1.0f;
+                }
+
+                return horizontalInput;
+            }
+        }
+        public float VerticalInput
+        {
+            get
+            {
+                float verticalInput = 0f;
+
+                if (Backward)
+                {
+                    verticalInput += -1.0f;
+                }
+                if (Forward)
+                {
+                    verticalInput += 1.0f;
+                }
+
+                return verticalInput;
+            }
+        }
 
         public void setPitch(float value)
         {
-            pitch = (short)(value * 10);
+            Pitch = (short)(value * 10);
         }
 
         public void setYaw(float value)
         {
-            yaw = (short)(value * 10);
+            Yaw = (short)(value * 10);
         }
 
         public float getPitch()
         {
-            return (float)pitch / 10;
+            return (float)Pitch / 10;
         }
 
         public float getYaw()
         {
-            return (float)yaw / 10;
-        }
-
-        public void setInputHorizontal(float value)
-        {
-            inputHorizontal = (sbyte)(value * 127);
-        }
-
-        public void setInputVertical(float value)
-        {
-            inputVertical = (sbyte)(value * 127);
-        }
-
-        public float getInputHorizontal()
-        {
-            return (float)inputHorizontal / 127;
-        }
-
-        public float getInputVertical()
-        {
-            return (float)inputVertical / 127;
+            return (float)Yaw / 10;
         }
     }
 }

@@ -233,16 +233,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bd2b276dd5aa5c48874e80bfbf81003, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentInput:
-    inputState: 0
-    inputHorizontal: 0
-    inputVertical: 0
-    pitch: 0
-    yaw: 0
-    inputJump: 0
-    inputFire: 0
-    inputAim: 0
-    inputRun: 0
+  CurrentInput:
+    InputState: 0
+    Left: 0
+    Right: 0
+    Forward: 0
+    Backward: 0
+    Pitch: 0
+    Yaw: 0
+    Jump: 0
+    Fire: 0
+    Aim: 0
+    Run: 0
 --- !u!114 &114246334535660092
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -286,7 +288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 253e5853f17dded4986adda3818fa4b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraPointer: {fileID: 1357355532517818}
+  CameraPointer: {fileID: 1357355532517818}
 --- !u!114 &114432824272225174
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -323,11 +325,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e829e4732ac58c8489495633a719095b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 6
-  runSpeed: 8
-  jumpHeight: 8
-  gravity: 9
-  gravityAccel: 9
+  Speed: 6
+  RunSpeed: 8
+  JumpHeight: 8
+  Gravity: 20
+  GravityAccel: 9
 --- !u!114 &114840291142834970
 MonoBehaviour:
   m_ObjectHideFlags: 1

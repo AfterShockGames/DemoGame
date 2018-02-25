@@ -11,8 +11,8 @@ namespace DemoGame.Camera
         public bool clampVerticalRotation = true;
         public float MinimumX = -90F;
         public float MaximumX = 90F;
-        public bool smooth;
-        public float smoothTime = 5f;
+        public bool Smooth;
+        public float SmoothTime = 5f;
 
         [SerializeField]
         private Quaternion m_CharacterTargetRot;
@@ -23,8 +23,7 @@ namespace DemoGame.Camera
             m_CharacterTargetRot = character.localRotation;
             m_CameraTargetRot = camera.localRotation;
         }
-
-
+        
         public void LookRotation(Transform character, Transform camera)
         {
             float yRot = Input.GetAxis("Mouse X") * XSensitivity;
@@ -36,12 +35,12 @@ namespace DemoGame.Camera
             if (clampVerticalRotation)
                 m_CameraTargetRot = ClampRotationAroundXAxis(m_CameraTargetRot);
 
-            if (smooth)
+            if (Smooth)
             {
                 character.rotation = Quaternion.Slerp(character.localRotation, m_CharacterTargetRot,
-                    smoothTime * Time.deltaTime);
+                    SmoothTime * Time.deltaTime);
                 camera.localRotation = Quaternion.Slerp(camera.localRotation, m_CameraTargetRot,
-                    smoothTime * Time.deltaTime);
+                    SmoothTime * Time.deltaTime);
             }
             else
             {
@@ -49,7 +48,6 @@ namespace DemoGame.Camera
                 camera.localRotation = m_CameraTargetRot;
             }
         }
-
 
         Quaternion ClampRotationAroundXAxis(Quaternion q)
         {

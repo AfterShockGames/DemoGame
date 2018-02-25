@@ -2,6 +2,7 @@
 using UnityEngine.Networking;
 using System.Collections;
 using DemoGame.Camera;
+using UnityInput = UnityEngine.Input;
 
 namespace DemoGame.Player.Input
 {
@@ -17,7 +18,7 @@ namespace DemoGame.Player.Input
 
         private AimPoint cameraAim;
 
-        public State currentInput;
+        public State CurrentInput;
 
         void Awake()
         {
@@ -31,17 +32,20 @@ namespace DemoGame.Player.Input
         {
             if (isLocalPlayer)
             {
-                currentInput.inputState = inputState;
+                CurrentInput.InputState = inputState;
 
-                currentInput.setInputHorizontal(UnityEngine.Input.GetAxis("Horizontal"));
-                currentInput.setInputVertical(UnityEngine.Input.GetAxis("Vertical"));
-                currentInput.setPitch(cameraAim.pitch);
-                currentInput.setYaw(cameraAim.yaw);
+                CurrentInput.Left = UnityInput.GetKey(KeyCode.LeftArrow) || UnityInput.GetKey(KeyCode.A);
+                CurrentInput.Right = UnityInput.GetKey(KeyCode.RightArrow) || UnityInput.GetKey(KeyCode.D);
+                CurrentInput.Forward = UnityInput.GetKey(KeyCode.UpArrow) || UnityInput.GetKey(KeyCode.W);
+                CurrentInput.Backward = UnityInput.GetKey(KeyCode.DownArrow) || UnityInput.GetKey(KeyCode.S);
 
-                currentInput.inputJump = UnityEngine.Input.GetButton("Jump");
-                currentInput.inputFire = UnityEngine.Input.GetButton("Fire1");
-                currentInput.inputAim = UnityEngine.Input.GetButton("Fire2");
-                currentInput.inputRun = UnityEngine.Input.GetButton("Run");
+                CurrentInput.setPitch(cameraAim.Pitch);
+                CurrentInput.setYaw(cameraAim.Yaw);
+
+                CurrentInput.Jump = UnityInput.GetButton("Jump");
+                CurrentInput.Fire = UnityInput.GetButton("Fire1");
+                CurrentInput.Aim = UnityInput.GetButton("Fire2");
+                CurrentInput.Run = UnityInput.GetButton("Run");
             }
         }
     }
