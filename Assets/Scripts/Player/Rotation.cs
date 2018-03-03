@@ -1,5 +1,9 @@
-﻿using DemoGame.Player.Input;
+﻿#region
+
+using DemoGame.Player.Input;
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Player
 {
@@ -8,11 +12,11 @@ namespace DemoGame.Player
     /// </summary>
     public class Rotation : MonoBehaviour
     {
-        private InputManager input;
+        private InputManager _inputManager;
 
         private void Awake()
         {
-            input = GetComponent<InputManager>();
+            _inputManager = GetComponent<InputManager>();
         }
 
         /// <summary>
@@ -23,7 +27,7 @@ namespace DemoGame.Player
         /// <param name="delta"></param>
         public void RunUpdate(float delta)
         {
-            transform.rotation = Quaternion.Euler(0, input.CurrentInput.getYaw(), 0);
+            transform.rotation = Quaternion.Euler(0, _inputManager.CurrentInput.GetYaw(), 0);
         }
     }
 }

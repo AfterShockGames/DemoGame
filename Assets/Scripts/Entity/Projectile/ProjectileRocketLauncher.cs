@@ -1,5 +1,9 @@
-﻿using System.Linq;
+﻿#region
+
+using System.Linq;
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Entity.Projectile
 {
@@ -8,13 +12,13 @@ namespace DemoGame.Entity.Projectile
         protected override void KillFrameReached()
         {
             Debug.Log("killframe reached");
-            var frame = _currentFrame;
+            var frame = CurrentFrame;
             var hitPoint = GetPositionAtFrame(frame);
 
             OnHitDirect(new RaycastHit(), hitPoint);
 
             // needs referal
-            OnHitIndirect(Physics.OverlapSphere(hitPoint, _explosionRadius).ToList(), hitPoint);
+            OnHitIndirect(Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList(), hitPoint);
 
             base.KillFrameReached();
         }
@@ -28,23 +32,20 @@ namespace DemoGame.Entity.Projectile
             var collided = false;
 
             var origin = GetPositionAtFrame(frame);
-            var distance = (_velocity * frameDeltaTime).magnitude;
+            var distance = (Velocity * frameDeltaTime).magnitude;
 
-            var ray = new Ray(origin, _velocity.normalized);
+            var ray = new Ray(origin, Velocity.normalized);
             var hits = Physics.RaycastAll(ray).ToList();
 
             var hitPoint = origin;
 
-            for (var i = 0; i < hits.Count; i++)
+            foreach (var hit in hits)
             {
-                var hit = hits[i];
+                if (IgnoreGameObjects.Contains(hit.collider.gameObject) || hit.distance >= distance)
+                    continue;
 
-                if (_ignoreGameObjects.Contains(hit.collider.gameObject) == false)
-                    if (hit.distance < distance)
-                    {
-                        collided = true;
-                        OnHitDirect(hit, origin + ray.direction * hit.distance);
-                    }
+                collided = true;
+                OnHitDirect(hit, origin + ray.direction * hit.distance);
             }
 
             // 2 - Non network collision (only process if hits nothing)
@@ -60,17 +61,16 @@ namespace DemoGame.Entity.Projectile
                     collided = true;
                 }
             }
-
-            if (collided)
+            else
             {
-                var indirectHits = Physics.OverlapSphere(hitPoint, _explosionRadius).ToList();
+                var indirectHits = Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList();
                 OnHitIndirect(indirectHits, hitPoint);
             }
         }
 
         internal override void OnHitDirect(RaycastHit hit, Vector3 position)
         {
-            if (_canImpact)
+            if (CanImpact)
                 base.OnHitDirect(hit, position);
         }
     }

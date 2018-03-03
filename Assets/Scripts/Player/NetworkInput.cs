@@ -1,8 +1,12 @@
-﻿using System.Collections.Generic;
+﻿#region
+
+using System.Collections.Generic;
 using DemoGame.Camera;
 using DemoGame.Player.Input;
 using UnityEngine;
 using UnityEngine.Networking;
+
+#endregion
 
 namespace DemoGame.Player
 {
@@ -23,48 +27,63 @@ namespace DemoGame.Player
     [NetworkSettings(channel = 1, sendInterval = 0.33f)]
     public class NetworkInput : NetworkBehaviour
     {
-        private const float WARNING_CLIENT_WAITING_STATES = 30; //How many states to keep before warning
-        private const float MAX_CLIENT_WAITING_STATES = 50; //How many states to keep on client
+        //How many states to keep before warning
+        private const float WarningClientWaitingStates = 30;
 
-        private const float MAX_CLIENT_DISTANCE_WARNING = 0.25f;
-            //Max distance between server and localy calculated position
+        //How many states to keep on client
+        private const float MaxClientWaitingStates = 50;
 
-        private const float MAX_SERVER_DISTANCE_SNAP = 0.15f;
-            //Max distance between client and server calculated position before SNAPPING
+        //Max distance between server and localy calculated position
+        private const float MaxClientDistanceWarning = 0.25f;
 
-        private AimPoint cameraAimPoint;
+        //Max distance between client and server calculated position before SNAPPING
+        private const float MaxServerDistanceSnap = 0.15f;
+
+        private AimPoint _cameraAimPoint;
 
         //Others characters scripts (see each script to know what it does)
-        private MouseAim cameraMouseAim;
-        private InputManager characterInput;
-        private Movement characterMovement;
-        private Rotation characterRotation;
+        private MouseAim _cameraMouseAim;
+        private InputManager _characterInput;
+        private Movement _characterMovement;
+        private Rotation _characterRotation;
 
-        [SerializeField] private int clientAckState; //CLIENT SIDE last ack state
+        //CLIENT SIDE last ack state
+        [SerializeField] private int _clientAckState;
 
-        [SerializeField] private int clientInputState; //SERVER SIDE last received state
+        //SERVER SIDE last received state
+        [SerializeField] private int _clientInputState;
 
-        private Queue<Input.State> inputStates; //CLIENT SIDE input states not ack by server
+        //CLIENT SIDE input states not ack by server
+        private Queue<Input.State> _inputStates;
 
-        [SerializeField] private int localInputState; //CLIENT SIDE last sended state
+        //CLIENT SIDE last sended state
+        [SerializeField] private int _localInputState;
 
-        private float nextSendTime; //CLIENT SIDE time when the client must send data to server
-        private Vector3 serverLastPredPosition; //CLIENT SIDE last predicted pos from server
-        private Quaternion serverLastPredRotation; //CLIENT SIDE last predicted rot from server
+        //CLIENT SIDE time when the client must send data to server
+        private float _nextSendTime;
 
-        private Vector3 serverLastRecvPosition; //CLIENT SIDE last received pos from server
-        private Quaternion serverLastRecvRotation; //CLIENT SIDE last received rot from server
+        //CLIENT SIDE last predicted pos from server
+        private Vector3 _serverLastPredPosition;
+
+        //CLIENT SIDE last predicted rot from server
+        private Quaternion _serverLastPredRotation;
+
+        //CLIENT SIDE last received pos from server
+        private Vector3 _serverLastRecvPosition;
+
+        //CLIENT SIDE last received rot from server
+        private Quaternion _serverLastRecvRotation;
 
         private void Start()
         {
-            inputStates = new Queue<Input.State>();
+            _inputStates = new Queue<Input.State>();
 
-            cameraMouseAim = UnityEngine.Camera.main.GetComponent<MouseAim>();
-            cameraAimPoint = UnityEngine.Camera.main.GetComponent<AimPoint>();
+            _cameraMouseAim = UnityEngine.Camera.main.GetComponent<MouseAim>();
+            _cameraAimPoint = UnityEngine.Camera.main.GetComponent<AimPoint>();
 
-            characterInput = GetComponent<InputManager>();
-            characterMovement = GetComponent<Movement>();
-            characterRotation = GetComponent<Rotation>();
+            _characterInput = GetComponent<InputManager>();
+            _characterMovement = GetComponent<Movement>();
+            _characterRotation = GetComponent<Rotation>();
         }
 
         private void FixedUpdate()
@@ -72,32 +91,42 @@ namespace DemoGame.Player
             //Client: Please read: http://forum.unity3d.com/threads/tips-for-server-authoritative-player-movement.199538/
 
             //Client: Only client run simulation in realtime for the player to see
-            if (isLocalPlayer)
+
+            if (!isLocalPlayer)
+                return;
+
+            //Client: start a new state
+            _localInputState = _localInputState + 1;
+
+            //Client: Updates camera
+            _cameraMouseAim.RunUpdate(Time.fixedDeltaTime);
+            _cameraAimPoint.RunUpdate(Time.fixedDeltaTime);
+
+            //Client: gathers user input state
+            _characterInput.Parse(_localInputState);
+
+            //Client: add new input to the list
+            _inputStates.Enqueue(_characterInput.CurrentInput);
+
+            //Client: execute simulation on local data
+            _characterMovement.RunUpdate(Time.fixedDeltaTime);
+            _characterRotation.RunUpdate(Time.fixedDeltaTime);
+
+            //Client: Trim commands to 25 and send commands to server
+            if (_inputStates.Count > WarningClientWaitingStates)
+                Debug.LogWarning("[NetworkInput]: States starting pulling up, are network condition bad?");
+
+            if (_inputStates.Count > MaxClientWaitingStates)
+                Debug.LogError("Too many waiting states, starting to drop frames");
+
+            while (_inputStates.Count > MaxClientWaitingStates)
+                _inputStates.Dequeue();
+
+            //Client: Send every sendInterval
+            if (isServer && isLocalPlayer || _nextSendTime < Time.time)
             {
-                //Client: start a new state
-                localInputState = localInputState + 1;
-                //Client: Updates camera
-                cameraMouseAim.RunUpdate(Time.fixedDeltaTime);
-                cameraAimPoint.RunUpdate(Time.fixedDeltaTime);
-                //Client: gathers user input state
-                characterInput.Parse(localInputState);
-                //Client: add new input to the list
-                inputStates.Enqueue(characterInput.CurrentInput);
-                //Client: execute simulation on local data
-                characterMovement.RunUpdate(Time.fixedDeltaTime);
-                characterRotation.RunUpdate(Time.fixedDeltaTime);
-                //Client: Trim commands to 25 and send commands to server
-                if (inputStates.Count > WARNING_CLIENT_WAITING_STATES)
-                    Debug.LogWarning("[NetworkInput]: States starting pulling up, are network condition bad?");
-                if (inputStates.Count > MAX_CLIENT_WAITING_STATES)
-                    Debug.LogError("Too many waiting states, starting to drop frames");
-                while (inputStates.Count > MAX_CLIENT_WAITING_STATES) inputStates.Dequeue();
-                //Client: Send every sendInterval
-                if (isServer && isLocalPlayer || nextSendTime < Time.time)
-                {
-                    CmdSetServerInput(inputStates.ToArray(), transform.position);
-                    nextSendTime = Time.time + 0.33f;
-                }
+                CmdSetServerInput(_inputStates.ToArray(), transform.position);
+                _nextSendTime = Time.time + 0.33f;
             }
         }
 
@@ -111,25 +140,27 @@ namespace DemoGame.Player
             var index = 0;
 
             //Server: Input received but state not consecutive with the last one ACKed
-            if (newInputs.Length > 0 && newInputs[index].InputState > clientInputState + 1)
-                Debug.LogWarning("Missing inputs from " + clientInputState + " to " + newInputs[index].InputState);
+            if (newInputs.Length > 0 && newInputs[index].InputState > _clientInputState + 1)
+                Debug.LogWarning("Missing inputs from " + _clientInputState + " to " + newInputs[index].InputState);
 
             //Server: Discard all old states (state already ACK from the server)
-            while (index < newInputs.Length && newInputs[index].InputState <= clientInputState)
+            while (index < newInputs.Length && newInputs[index].InputState <= _clientInputState)
                 index++;
 
             //Server: Run through all received states to execute them
             while (index < newInputs.Length)
             {
                 //Server: Set the character input
-                characterInput.CurrentInput = newInputs[index];
+                _characterInput.CurrentInput = newInputs[index];
+
                 //Server: Set the client state number
-                clientInputState = newInputs[index].InputState;
+                _clientInputState = newInputs[index].InputState;
+
                 //Server: Run update for this step according to received input
                 if (!isLocalPlayer)
                 {
-                    characterMovement.RunUpdate(Time.fixedDeltaTime);
-                    characterRotation.RunUpdate(Time.fixedDeltaTime);
+                    _characterMovement.RunUpdate(Time.fixedDeltaTime);
+                    _characterRotation.RunUpdate(Time.fixedDeltaTime);
                 }
 
                 index++;
@@ -137,12 +168,12 @@ namespace DemoGame.Player
 
             //Check on server that position received from client isn't too far from the position calculated locally
             //TODO: maybe add a cheat check here
-            if (Vector3.Distance(newClientPos, transform.position) > MAX_CLIENT_DISTANCE_WARNING)
+            if (Vector3.Distance(newClientPos, transform.position) > MaxClientDistanceWarning)
                 Debug.LogWarning(
                     "Client distance too far from player (maybe net condition are very bad or move code isn't deterministic)");
 
             //Server: Send to other script that state update finished
-            SendMessage("ServerStateReceived", clientInputState, SendMessageOptions.DontRequireReceiver);
+            SendMessage("ServerStateReceived", _clientInputState, SendMessageOptions.DontRequireReceiver);
         }
 
         /// <summary>
@@ -160,62 +191,64 @@ namespace DemoGame.Player
             var serverRecvRotation = characterState.Rotation;
 
             //Client: Check that we received a new state from server (not some delayed packet)
-            if (clientAckState < serverRecvState)
+            if (_clientAckState >= serverRecvState)
+                return;
+            //Client: Set the last server ack state
+            _clientAckState = serverRecvState;
+
+            //Client: Discard all input states where state are before the ack state
+            var loop = true;
+            while (loop && _inputStates.Count > 0)
             {
-                //Client: Set the last server ack state
-                clientAckState = serverRecvState;
+                var state = _inputStates.Peek();
+                if (state.InputState <= _clientAckState)
+                    _inputStates.Dequeue();
+                else
+                    loop = false;
+            }
 
-                //Client: Discard all input states where state are before the ack state
-                var loop = true;
-                while (loop && inputStates.Count > 0)
-                {
-                    var state = inputStates.Peek();
-                    if (state.InputState <= clientAckState)
-                        inputStates.Dequeue();
-                    else
-                        loop = false;
-                }
+            //Client: store actual Player position, rotation and velocity along with current input
+            var oldState = _characterInput.CurrentInput;
+            var oldPos = transform.position;
+            var oldRot = transform.rotation;
 
-                //Client: store actual Player position, rotation and velocity along with current input
-                var oldState = characterInput.CurrentInput;
-                var oldPos = transform.position;
-                var oldRot = transform.rotation;
+            //Client: move back the player to the received server position
+            _serverLastRecvPosition = serverRecvPosition;
+            _serverLastRecvRotation = serverRecvRotation;
+            transform.position = _serverLastRecvPosition;
+            transform.rotation = _serverLastRecvRotation;
 
-                //Client: move back the player to the received server position
-                serverLastRecvPosition = serverRecvPosition;
-                serverLastRecvRotation = serverRecvRotation;
-                transform.position = serverLastRecvPosition;
-                transform.rotation = serverLastRecvRotation;
+            //Client: replay all input based on new correct position
+            foreach (var state in _inputStates)
+            {
+                //Set the input
+                _characterInput.CurrentInput = state;
 
-                //Client: replay all input based on new correct position
-                foreach (var state in inputStates)
-                {
-                    //Set the input
-                    characterInput.CurrentInput = state;
-                    //Run the simulation
-                    characterMovement.RunUpdate(Time.fixedDeltaTime);
-                    characterRotation.RunUpdate(Time.fixedDeltaTime);
-                }
-                //Client: save the new predicted character position
-                serverLastPredPosition = transform.position;
-                serverLastPredRotation = transform.rotation;
+                //Run the simulation
+                _characterMovement.RunUpdate(Time.fixedDeltaTime);
+                _characterRotation.RunUpdate(Time.fixedDeltaTime);
+            }
+            //Client: save the new predicted character position
+            _serverLastPredPosition = transform.position;
+            _serverLastPredRotation = transform.rotation;
 
-                //Client: restore initial position, rotation and velocity
-                characterInput.CurrentInput = oldState;
-                transform.position = oldPos;
-                transform.rotation = oldRot;
+            //Client: restore initial position, rotation and velocity
+            _characterInput.CurrentInput = oldState;
+            transform.position = oldPos;
+            transform.rotation = oldRot;
 
-                //Client: Check if a prediction error occured in the past
-                //Debug.Log("States in queue: " + inputStates.Count + " Predicted distance: " + Vector3.Distance(transform.position, serverLastPredPosition));
-                if (Vector3.Distance(transform.position, serverLastPredPosition) > MAX_SERVER_DISTANCE_SNAP)
-                {
-                    //Client: Snap to correct position
-                    Debug.LogWarning("Prediction error!");
-                    transform.position = Vector3.Lerp(transform.position, serverLastPredPosition,
-                        Time.fixedDeltaTime * 10);
-                    transform.rotation = Quaternion.Lerp(transform.rotation, serverLastPredRotation,
-                        Time.fixedDeltaTime * 10);
-                }
+            //Client: Check if a prediction error occured in the past
+            //Debug.Log("States in queue: " + inputStates.Count + " Predicted distance: " + Vector3.Distance(transform.position, serverLastPredPosition));
+            if (Vector3.Distance(transform.position, _serverLastPredPosition) > MaxServerDistanceSnap)
+            {
+                //Client: Snap to correct position
+                Debug.LogWarning("Prediction error!");
+
+                transform.position = Vector3.Lerp(transform.position, _serverLastPredPosition,
+                    Time.fixedDeltaTime * 10);
+
+                transform.rotation = Quaternion.Lerp(transform.rotation, _serverLastPredRotation,
+                    Time.fixedDeltaTime * 10);
             }
         }
 
@@ -227,9 +260,10 @@ namespace DemoGame.Player
             else if (isLocalPlayer)
             {
                 Gizmos.color = Color.green;
-                Gizmos.DrawWireCube(serverLastRecvPosition + Vector3.up, Vector3.one + Vector3.up);
+                Gizmos.DrawWireCube(_serverLastRecvPosition + Vector3.up, Vector3.one + Vector3.up);
+
                 Gizmos.color = Color.red;
-                Gizmos.DrawWireCube(serverLastPredPosition + Vector3.up, Vector3.one + Vector3.up);
+                Gizmos.DrawWireCube(_serverLastPredPosition + Vector3.up, Vector3.one + Vector3.up);
             }
         }
     }

@@ -1,5 +1,9 @@
-﻿using UnityEngine;
+﻿#region
+
+using UnityEngine;
 using UnityEngine.Networking;
+
+#endregion
 
 namespace DemoGame.Player
 {
@@ -10,13 +14,13 @@ namespace DemoGame.Player
     [NetworkSettings(channel = 1, sendInterval = 0.33f)]
     public class NetworkSync : NetworkBehaviour
     {
-        private NetworkInterpolation networkInterpolation; //The interpolation component
+        private NetworkInterpolation _networkInterpolation; //The interpolation component
 
-        [SyncVar] private State serverLastState; //SERVER: Store last state
+        [SyncVar] private State _serverLastState; //SERVER: Store last state
 
         private void Start()
         {
-            networkInterpolation = GetComponent<NetworkInterpolation>();
+            _networkInterpolation = GetComponent<NetworkInterpolation>();
         }
 
         /// <summary>
@@ -25,13 +29,10 @@ namespace DemoGame.Player
         /// <param name="clientInputState"></param>
         private void ServerStateReceived(int clientInputState)
         {
-            var state = new State();
-            state.Frame = clientInputState;
-            state.Position = transform.position;
-            state.Rotation = transform.rotation;
+            var state = new State(clientInputState, transform.position, transform.rotation);
 
             //Server: trigger the synchronisation due to SyncVar property
-            serverLastState = state;
+            _serverLastState = state;
 
             //If server and client is local, bypass the sync and set state as ACKed
             if (isServer && isLocalPlayer)
@@ -46,9 +47,9 @@ namespace DemoGame.Player
         /// <returns></returns>
         public override bool OnSerialize(NetworkWriter writer, bool initialState)
         {
-            writer.Write(serverLastState.Frame);
-            writer.Write(serverLastState.Position);
-            writer.Write(serverLastState.Rotation);
+            writer.Write(_serverLastState.Frame);
+            writer.Write(_serverLastState.Position);
+            writer.Write(_serverLastState.Rotation);
 
             return true;
         }
@@ -60,11 +61,7 @@ namespace DemoGame.Player
         /// <param name="initialState"></param>
         public override void OnDeserialize(NetworkReader reader, bool initialState)
         {
-            var state = new State();
-
-            state.Frame = reader.ReadInt32();
-            state.Position = reader.ReadVector3();
-            state.Rotation = reader.ReadQuaternion();
+            var state = new State(reader.ReadInt32(), reader.ReadVector3(), reader.ReadQuaternion());
 
             //Client: Received a new state for the local player, treat it as an ACK and do reconciliation
             if (isLocalPlayer)
@@ -80,10 +77,10 @@ namespace DemoGame.Player
                     transform.position = state.Position;
                     transform.rotation = state.Rotation;
                 }
-                else if (networkInterpolation != null)
+                else if (_networkInterpolation != null)
                 {
                     //Others Clients: Interpolate between received positions
-                    networkInterpolation.ReceiveState(state);
+                    _networkInterpolation.ReceiveState(state);
                 }
             }
         }

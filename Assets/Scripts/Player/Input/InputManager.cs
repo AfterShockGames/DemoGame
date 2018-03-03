@@ -1,7 +1,11 @@
-﻿using DemoGame.Camera;
+﻿#region
+
+using DemoGame.Camera;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityInput = UnityEngine.Input;
+
+#endregion
 
 namespace DemoGame.Player.Input
 {
@@ -28,23 +32,23 @@ namespace DemoGame.Player.Input
         /// </summary>
         public void Parse(int inputState)
         {
-            if (isLocalPlayer)
-            {
-                CurrentInput.InputState = inputState;
+            if (!isLocalPlayer)
+                return;
 
-                CurrentInput.Left = UnityInput.GetKey(KeyCode.LeftArrow) || UnityInput.GetKey(KeyCode.A);
-                CurrentInput.Right = UnityInput.GetKey(KeyCode.RightArrow) || UnityInput.GetKey(KeyCode.D);
-                CurrentInput.Forward = UnityInput.GetKey(KeyCode.UpArrow) || UnityInput.GetKey(KeyCode.W);
-                CurrentInput.Backward = UnityInput.GetKey(KeyCode.DownArrow) || UnityInput.GetKey(KeyCode.S);
+            CurrentInput.InputState = inputState;
 
-                CurrentInput.setPitch(cameraAim.Pitch);
-                CurrentInput.setYaw(cameraAim.Yaw);
+            CurrentInput.Left = UnityInput.GetKey(KeyCode.LeftArrow) || UnityInput.GetKey(KeyCode.A);
+            CurrentInput.Right = UnityInput.GetKey(KeyCode.RightArrow) || UnityInput.GetKey(KeyCode.D);
+            CurrentInput.Forward = UnityInput.GetKey(KeyCode.UpArrow) || UnityInput.GetKey(KeyCode.W);
+            CurrentInput.Backward = UnityInput.GetKey(KeyCode.DownArrow) || UnityInput.GetKey(KeyCode.S);
 
-                CurrentInput.Jump = UnityInput.GetButton("Jump");
-                CurrentInput.Fire = UnityInput.GetButton("Fire1");
-                CurrentInput.Aim = UnityInput.GetButton("Fire2");
-                CurrentInput.Run = UnityInput.GetButton("Run");
-            }
+            CurrentInput.SetPitch(cameraAim.Pitch);
+            CurrentInput.SetYaw(cameraAim.Yaw);
+
+            CurrentInput.Jump = UnityInput.GetButton("Jump");
+            CurrentInput.Fire = UnityInput.GetButton("Fire1");
+            CurrentInput.Aim = UnityInput.GetButton("Fire2");
+            CurrentInput.Run = UnityInput.GetButton("Run");
         }
     }
 }

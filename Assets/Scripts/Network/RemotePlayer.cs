@@ -1,5 +1,9 @@
-﻿using UnityEngine;
+﻿#region
+
+using UnityEngine;
 using UnityEngine.Networking;
+
+#endregion
 
 namespace DemoGame.Network
 {
@@ -94,10 +98,7 @@ namespace DemoGame.Network
 
         public GameObject GetCharacterObject()
         {
-            if (SpawnedCharacterID == null)
-                return null;
-
-            return ClientScene.FindLocalObject(SpawnedCharacterID);
+            return SpawnedCharacterID == null ? null : ClientScene.FindLocalObject(SpawnedCharacterID);
         }
     }
 }

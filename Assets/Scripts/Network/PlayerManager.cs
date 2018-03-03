@@ -1,5 +1,9 @@
-﻿using System;
+﻿#region
+
+using System;
 using UnityEngine.Networking;
+
+#endregion
 
 namespace DemoGame.Network
 {
@@ -13,12 +17,7 @@ namespace DemoGame.Network
 
         public static PlayerManager Instance
         {
-            get
-            {
-                if (instance == null)
-                    instance = FindObjectOfType<PlayerManager>();
-                return instance;
-            }
+            get { return instance ?? (instance = FindObjectOfType<PlayerManager>()); }
         }
 
         public RemotePlayer GetLocalPlayer()

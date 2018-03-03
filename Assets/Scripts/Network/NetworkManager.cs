@@ -9,12 +9,7 @@
 
         public static NetworkManager Instance
         {
-            get
-            {
-                if (instance == null)
-                    instance = FindObjectOfType<NetworkManager>();
-                return instance;
-            }
+            get { return instance ?? (instance = FindObjectOfType<NetworkManager>()); }
         }
     }
 }

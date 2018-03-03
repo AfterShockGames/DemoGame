@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿#region
+
+using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Camera
 {
@@ -9,12 +13,12 @@ namespace DemoGame.Camera
     /// </summary>
     public class Dispatcher : MonoBehaviour
     {
-        private MouseAim mouseAim;
+        private MouseAim _mouseAim;
 
         private void Start()
         {
-            mouseAim = GetComponent<MouseAim>();
-            mouseAim.enabled = false;
+            _mouseAim = GetComponent<MouseAim>();
+            _mouseAim.enabled = false;
         }
 
         /// <summary>
@@ -23,7 +27,7 @@ namespace DemoGame.Camera
         /// <param name="target"></param>
         public void SetCurrentCharacterTarget(GameObject target)
         {
-            mouseAim.SetTarget(target);
+            _mouseAim.SetTarget(target);
         }
     }
 }

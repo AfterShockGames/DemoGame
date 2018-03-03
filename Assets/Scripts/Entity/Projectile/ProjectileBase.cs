@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿#region
+
+using System.Collections.Generic;
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Entity.Projectile
 {
@@ -7,23 +11,23 @@ namespace DemoGame.Entity.Projectile
 
     public class ProjectileBase : MonoBehaviour
     {
-        internal bool _canImpact = true;
-        internal double _currentFrame;
-        internal float _explosionRadius = 5f;
-        internal int _frameLifetime;
+        internal bool CanImpact = true;
+        internal double CurrentFrame;
+        internal float ExplosionRadius = 5f;
+        internal int FrameLifetime;
 
-        internal byte _healthImpact = 100;
+        internal byte HealthImpact = 100;
 
-        internal HashSet<GameObject> _ignoreGameObjects = new HashSet<GameObject>();
-        internal float _impactForce = 25F;
+        internal HashSet<GameObject> IgnoreGameObjects = new HashSet<GameObject>();
+        internal float ImpactForce = 25F;
 
-        internal string _impactParticle;
-        internal string _impactParticleResource;
-        internal double _killFrame;
+        internal string ImpactParticle;
+        internal string ImpactParticleResource;
+        internal double KillFrame;
 
-        internal Vector3 _origin;
-        internal double _spawnFrame;
-        internal Vector3 _velocity;
+        internal Vector3 Origin;
+        internal double SpawnFrame;
+        internal Vector3 Velocity;
 
         public event WeaponProjectileCallback OnImpact;
 
@@ -34,77 +38,77 @@ namespace DemoGame.Entity.Projectile
 
         public ProjectileBase SetHealthImpact(byte healthImpact)
         {
-            _healthImpact = healthImpact;
+            HealthImpact = healthImpact;
             return this;
         }
 
 
         public ProjectileBase SetSpawnFrame(int spawnFrame)
         {
-            _spawnFrame = spawnFrame;
-            _killFrame = spawnFrame + _frameLifetime;
+            SpawnFrame = spawnFrame;
+            KillFrame = spawnFrame + FrameLifetime;
             return this;
         }
 
         public ProjectileBase SetIgnoreGameObjects(HashSet<GameObject> ignoreGameObjects)
         {
-            _ignoreGameObjects = ignoreGameObjects;
+            IgnoreGameObjects = ignoreGameObjects;
             return this;
         }
 
         public ProjectileBase SetOrigin(Vector3 origin)
         {
-            _origin = origin;
-            transform.position = _origin;
+            Origin = origin;
+            transform.position = Origin;
             return this;
         }
 
         public ProjectileBase SetVelocity(Vector3 velocity)
         {
-            _velocity = velocity;
+            Velocity = velocity;
             return this;
         }
 
         public ProjectileBase SetCanImpact(bool canImpact)
         {
-            _canImpact = canImpact;
+            CanImpact = canImpact;
             return this;
         }
 
         public ProjectileBase SetKillFrame(int killFrame)
         {
-            _killFrame = killFrame;
+            KillFrame = killFrame;
             return this;
         }
 
         public ProjectileBase SetCurrentFrame(int currentFrame)
         {
-            _currentFrame = currentFrame;
+            CurrentFrame = currentFrame;
             return this;
         }
 
         public ProjectileBase SetFrameLifetime(int frameLifetime)
         {
-            _frameLifetime = frameLifetime;
-            _killFrame = _spawnFrame + _frameLifetime;
+            FrameLifetime = frameLifetime;
+            KillFrame = SpawnFrame + FrameLifetime;
             return this;
         }
 
         public ProjectileBase SetImpactParticle(string particle)
         {
-            _impactParticle = particle;
+            ImpactParticle = particle;
             return this;
         }
 
         public ProjectileBase SetExplosionRadius(float explosionRadius)
         {
-            _explosionRadius = explosionRadius;
+            ExplosionRadius = explosionRadius;
             return this;
         }
 
         public ProjectileBase SetImpactForce(float impactForce)
         {
-            _impactForce = impactForce;
+            ImpactForce = impactForce;
             return this;
         }
 
@@ -115,7 +119,7 @@ namespace DemoGame.Entity.Projectile
 
         public ProjectileBase IgnoreGameObject(GameObject ignoreGameObject)
         {
-            _ignoreGameObjects.Add(ignoreGameObject);
+            IgnoreGameObjects.Add(ignoreGameObject);
             return this;
         }
 
@@ -134,51 +138,52 @@ namespace DemoGame.Entity.Projectile
 
         internal void OnHitIndirect(List<Collider> hits, Vector3 hitPoint)
         {
-            if (_canImpact)
-                for (var i = 0; i < hits.Count; i++)
+            if (!CanImpact)
+                return;
+
+            foreach (var hit in hits)
+            {
+                var distance = (hit.transform.position - gameObject.transform.position).magnitude;
+
+                if (UnityEngine.Network.isServer)
                 {
-                    var hit = hits[i];
-
-                    var distance = (hit.transform.position - gameObject.transform.position).magnitude;
-
-                    if (UnityEngine.Network.isServer)
-                    {
-                        // apply indirect damage
-                        var healthImpact = Mathf.Max(0, (1f - distance / _explosionRadius) * _healthImpact);
-                        //hit.gameObject.transform.root.GetComponent<Controller>().ApplyDamage((byte)healthImpact);
-                    }
-
-                    // apply force from indirect hit
-                    var multiplier = distance / _explosionRadius;
-
-                    //hit.gameObject.transform.root.GetComponent<Motor>()
-                    //    .AddImpact(hit.gameObject.transform.position - hitPoint, _impactForce * multiplier);
+                    // apply indirect damage
+                    var healthImpact = Mathf.Max(0, (1f - distance / ExplosionRadius) * HealthImpact);
+                    //hit.gameObject.transform.root.GetComponent<Controller>().ApplyDamage((byte)healthImpact);
                 }
+
+                // apply force from indirect hit
+                var multiplier = distance / ExplosionRadius;
+
+                //hit.gameObject.transform.root.GetComponent<Motor>()
+                //    .AddImpact(hit.gameObject.transform.position - hitPoint, _impactForce * multiplier);
+            }
         }
 
 
         public Vector3 GetPositionAtFrame(double frame)
         {
-            var totalDelta = (float) (frame - _spawnFrame);
+            var totalDelta = (float) (frame - SpawnFrame);
+
             return
-                _origin +
-                _velocity * Time.fixedDeltaTime * totalDelta;
+                Origin +
+                Velocity * Time.fixedDeltaTime * totalDelta;
         }
 
         private void FixedUpdate()
         {
-            if (_canImpact)
-            {
-                var serverFrame = UnityEngine.Network.time;
-                if (serverFrame > _killFrame)
-                    KillFrameReached();
+            if (!CanImpact)
+                return;
 
-                for (; _currentFrame < serverFrame; _currentFrame++)
-                    ResolveCollisions(_currentFrame, Time.fixedDeltaTime);
+            var serverFrame = UnityEngine.Network.time;
+            if (serverFrame > KillFrame)
+                KillFrameReached();
 
-                transform.position =
-                    GetPositionAtFrame(serverFrame);
-            }
+            for (; CurrentFrame < serverFrame; CurrentFrame++)
+                ResolveCollisions(CurrentFrame, Time.fixedDeltaTime);
+
+            transform.position =
+                GetPositionAtFrame(serverFrame);
         }
 
         protected virtual void KillFrameReached()

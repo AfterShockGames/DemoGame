@@ -9,9 +9,7 @@ public static class SuperCollider
         if (collider is SphereCollider)
             return ClosestPointOnSurface((SphereCollider) collider, to);
         if (collider is CapsuleCollider)
-        {
             return ClosestPointOnSurface((CapsuleCollider) collider, to);
-        }
         if (collider is MeshCollider)
         {
             var bsp = collider.GetComponent<BSPTree>();
@@ -88,19 +86,19 @@ public static class SuperCollider
         var ct = collider.transform; // Transform of the collider
 
         var lineLength = collider.height - collider.radius * 2;
-            // The length of the line connecting the center of both sphere
+        // The length of the line connecting the center of both sphere
         var dir = Vector3.up;
 
         var upperSphere = dir * lineLength * 0.5f + collider.center;
-            // The position of the radius of the upper sphere in local coordinates
+        // The position of the radius of the upper sphere in local coordinates
         var lowerSphere = -dir * lineLength * 0.5f + collider.center;
-            // The position of the radius of the lower sphere in local coordinates
+        // The position of the radius of the lower sphere in local coordinates
 
         var local = ct.InverseTransformPoint(to); // The position of the controller in local coordinates
 
         var p = Vector3.zero; // Contact point
         var pt = Vector3.zero;
-            // The point we need to use to get a direction vector with the controller to calculate contact point
+        // The point we need to use to get a direction vector with the controller to calculate contact point
 
         if (local.y < lineLength * 0.5f && local.y > -lineLength * 0.5f)
             // Controller is contacting with cylinder, not spheres

@@ -1,4 +1,8 @@
-﻿using System;
+﻿#region
+
+using System;
+
+#endregion
 
 namespace DemoGame.Player.Input
 {
@@ -57,22 +61,22 @@ namespace DemoGame.Player.Input
             }
         }
 
-        public void setPitch(float value)
+        public void SetPitch(float value)
         {
             Pitch = (short) (value * 10);
         }
 
-        public void setYaw(float value)
+        public void SetYaw(float value)
         {
             Yaw = (short) (value * 10);
         }
 
-        public float getPitch()
+        public float GetPitch()
         {
             return (float) Pitch / 10;
         }
 
-        public float getYaw()
+        public float GetYaw()
         {
             return (float) Yaw / 10;
         }

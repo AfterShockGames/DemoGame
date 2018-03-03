@@ -1,6 +1,10 @@
-﻿using DemoGame.Camera;
+﻿#region
+
+using DemoGame.Camera;
 using UnityEngine;
 using UnityEngine.Networking;
+
+#endregion
 
 namespace DemoGame.Player
 {
@@ -21,6 +25,7 @@ namespace DemoGame.Player
         {
             GetComponent<Movement>().enabled = false;
             GetComponent<Rotation>().enabled = false;
+
             if (IsLocalPlayer)
                 UnityEngine.Camera.main.GetComponent<Dispatcher>().SetCurrentCharacterTarget(CameraPointer);
 

@@ -16,6 +16,15 @@ public class SuperCharacterController : MonoBehaviour
     private const int MaxPushbackIterations = 2;
 
     private static SuperCollisionType defaultCollisionType;
+
+    [SerializeField] private readonly CollisionSphere[] spheres =
+        new CollisionSphere[3]
+        {
+            new CollisionSphere(0.5f, true, false),
+            new CollisionSphere(1.0f, false, false),
+            new CollisionSphere(1.5f, false, true)
+        };
+
     private bool clamping = true;
 
     [SerializeField] private bool debugGrounding;
@@ -45,14 +54,6 @@ public class SuperCharacterController : MonoBehaviour
     [SerializeField] public float radius = 0.5f;
 
     private bool slopeLimiting = true;
-
-    [SerializeField] private readonly CollisionSphere[] spheres =
-        new CollisionSphere[3]
-        {
-            new CollisionSphere(0.5f, true, false),
-            new CollisionSphere(1.0f, false, false),
-            new CollisionSphere(1.5f, false, true)
-        };
 
     private int TemporaryLayerIndex;
 
@@ -523,14 +524,14 @@ public class SuperCharacterController : MonoBehaviour
         private const float groundingMaxPercentFromCenter = 0.85f;
         private const float groundingMinPercentFromcenter = 0.50f;
         private readonly SuperCharacterController controller;
+
+        private readonly LayerMask walkable;
         private GroundHit farGround;
         private GroundHit flushGround;
         private GroundHit nearGround;
 
         private GroundHit primaryGround;
         private GroundHit stepGround;
-
-        private readonly LayerMask walkable;
 
         public SuperGround(LayerMask walkable, SuperCharacterController controller)
         {

@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿#region
+
+using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Camera
 {
@@ -10,15 +14,14 @@ namespace DemoGame.Camera
     /// </remarks>
     public class MouseAim : MonoBehaviour
     {
+        [SerializeField] private MouseLook _mouseLook;
         private UnityEngine.Camera m_Camera;
-
-        [SerializeField] private MouseLook m_MouseLook;
 
         public GameObject Target;
 
         public void RunUpdate(float delta)
         {
-            m_MouseLook.LookRotation(Target.transform.parent, m_Camera.transform);
+            _mouseLook.LookRotation(Target.transform.parent, m_Camera.transform);
         }
 
         public void SetTarget(GameObject target)
@@ -37,7 +40,7 @@ namespace DemoGame.Camera
                 enabled = true;
 
                 m_Camera = UnityEngine.Camera.main;
-                m_MouseLook.Init(target.transform.parent, m_Camera.transform);
+                _mouseLook.Init(target.transform.parent, m_Camera.transform);
             }
         }
     }
