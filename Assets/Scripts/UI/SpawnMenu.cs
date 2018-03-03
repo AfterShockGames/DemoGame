@@ -1,5 +1,9 @@
-﻿using DemoGame.Network;
+﻿#region
+
+using DemoGame.Network;
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.UI
 {
@@ -40,14 +44,10 @@ namespace DemoGame.UI
                 }
 
                 if (player.isServer)
-                {
                     GUI.Box(new Rect(Screen.width / 2 - 150, 120, 300, 40), _instructionsOnServer);
-                }
                 else
-                {
                     GUI.Box(new Rect(Screen.width / 2 - 150, 120, 300, 80),
                         _instructionsOnMovingClient + _instructionsOnOtherClient);
-                }
             }
         }
     }

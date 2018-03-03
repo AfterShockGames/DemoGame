@@ -24,13 +24,13 @@ namespace DemoGame.Player
 
         private InputManager input;
 
+        public bool IsReplayMovement = false;
+
         [SerializeField] public float JumpHeight = 8.0F;
 
         [SerializeField] public float RunSpeed = 8.0F;
 
         [SerializeField] public float Speed = 6.0F;
-
-        public bool IsReplayMovement = false;
 
         private void Awake()
         {
@@ -96,10 +96,8 @@ namespace DemoGame.Player
                 Debug.Log("firing");
                 var weapon = GetComponent<WeaponBase>();
 
-                if(weapon.CanFire())
-                {
+                if (weapon.CanFire())
                     weapon.Fire();
-                }
             }
 
             _moveDirection = movement;

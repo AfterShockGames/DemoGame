@@ -14,8 +14,8 @@ namespace DemoGame.Camera
     /// </remarks>
     public class MouseAim : MonoBehaviour
     {
-        [SerializeField] private MouseLook _mouseLook;
         private UnityEngine.Camera _camera;
+        [SerializeField] private MouseLook _mouseLook;
 
         public GameObject Target;
 

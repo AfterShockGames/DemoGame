@@ -225,7 +225,7 @@ namespace DemoGame.Player
             {
                 //Set the input
                 _characterInput.CurrentInput = state;
-                
+
                 //Run the simulation
                 _characterMovement.RunUpdate(Time.fixedDeltaTime);
                 _characterRotation.RunUpdate(Time.fixedDeltaTime);

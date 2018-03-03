@@ -71,7 +71,7 @@ namespace DemoGame.Entity.Projectile
                 OnHitIndirect(indirectHits, hitPoint);
             }
 
-            if(collided)
+            if (collided)
                 Destroy(gameObject);
         }
 

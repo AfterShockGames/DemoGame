@@ -1,7 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿#region
+
 using DemoGame.Entity.Projectile;
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Entity.Weapon
 {

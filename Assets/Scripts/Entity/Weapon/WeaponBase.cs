@@ -1,16 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿#region
+
 using UnityEngine;
+
+#endregion
 
 namespace DemoGame.Entity.Weapon
 {
     public abstract class WeaponBase : MonoBehaviour
     {
-        public GameObject FireOrigin;
         public float FireInterval;
+        public GameObject FireOrigin;
         public float FireVelocity;
-        internal float LastShot;
         public byte HealthImpact;
+        internal float LastShot;
 
         public abstract bool CanFire();
 
