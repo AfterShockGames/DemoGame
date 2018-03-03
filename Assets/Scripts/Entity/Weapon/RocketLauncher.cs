@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DemoGame.Entity.Weapon
 {
-    public class RocketLauncher : WeaponProjectile
+    public class RocketLauncher : WeaponProjectileExplosion
     {
         public override bool CanFire()
         {
@@ -26,7 +26,7 @@ namespace DemoGame.Entity.Weapon
                     .SetCurrentFrame(UnityEngine.Network.time)
                     .SetFrameLifetime(ProjectileLifetime)
                     .SetSpawnFrame(UnityEngine.Network.time)
-                    .SetExplosionRadius(10.0f)
+                    .SetExplosionRadius(ExplosionRadius)
                     .SetCanImpact(true)
                     .SetHealthImpact(HealthImpact)
                     .SetOrigin(originPosition)

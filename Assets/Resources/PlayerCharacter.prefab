@@ -423,6 +423,7 @@ MonoBehaviour:
   Projectile: {fileID: 1624454853123306, guid: 5b86d732c652bf641a5e1e9353539450, type: 2}
   ProjectileLifetime: 10
   ImpactForce: 0
+  ExplosionRadius: 10
 --- !u!136 &136902072091971096
 CapsuleCollider:
   m_ObjectHideFlags: 1
