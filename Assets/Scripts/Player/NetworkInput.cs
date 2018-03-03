@@ -218,16 +218,21 @@ namespace DemoGame.Player
             transform.position = _serverLastRecvPosition;
             transform.rotation = _serverLastRecvRotation;
 
+            _characterMovement.IsReplayMovement = true;
+
             //Client: replay all input based on new correct position
             foreach (var state in _inputStates)
             {
                 //Set the input
                 _characterInput.CurrentInput = state;
-
+                
                 //Run the simulation
                 _characterMovement.RunUpdate(Time.fixedDeltaTime);
                 _characterRotation.RunUpdate(Time.fixedDeltaTime);
             }
+
+            _characterMovement.IsReplayMovement = false;
+
             //Client: save the new predicted character position
             _serverLastPredPosition = transform.position;
             _serverLastPredRotation = transform.rotation;

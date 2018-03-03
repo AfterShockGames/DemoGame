@@ -43,7 +43,7 @@ namespace DemoGame.Entity.Projectile
         }
 
 
-        public ProjectileBase SetSpawnFrame(int spawnFrame)
+        public ProjectileBase SetSpawnFrame(double spawnFrame)
         {
             SpawnFrame = spawnFrame;
             KillFrame = spawnFrame + FrameLifetime;
@@ -81,7 +81,7 @@ namespace DemoGame.Entity.Projectile
             return this;
         }
 
-        public ProjectileBase SetCurrentFrame(int currentFrame)
+        public ProjectileBase SetCurrentFrame(double currentFrame)
         {
             CurrentFrame = currentFrame;
             return this;

@@ -20,7 +20,11 @@ namespace DemoGame.Entity.Projectile
             // needs referal
             OnHitIndirect(Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList(), hitPoint);
 
+            Destroy(gameObject);
+
             base.KillFrameReached();
+
+            Destroy(gameObject);
         }
 
         // Check for collisions via 2 methods
@@ -66,6 +70,9 @@ namespace DemoGame.Entity.Projectile
                 var indirectHits = Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList();
                 OnHitIndirect(indirectHits, hitPoint);
             }
+
+            if(collided)
+                Destroy(gameObject);
         }
 
         internal override void OnHitDirect(RaycastHit hit, Vector3 position)

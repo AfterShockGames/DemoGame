@@ -1,5 +1,6 @@
 ﻿#region
 
+using DemoGame.Entity.Weapon;
 using DemoGame.Player.Input;
 using UnityEngine;
 
@@ -28,6 +29,8 @@ namespace DemoGame.Player
         [SerializeField] public float RunSpeed = 8.0F;
 
         [SerializeField] public float Speed = 6.0F;
+
+        public bool IsReplayMovement = false;
 
         private void Awake()
         {
@@ -88,8 +91,16 @@ namespace DemoGame.Player
                 controller.EnableClamping();
             }
 
-            if (input.CurrentInput.Fire)
+            if (input.CurrentInput.Fire && !IsReplayMovement)
+            {
                 Debug.Log("firing");
+                var weapon = GetComponent<WeaponBase>();
+
+                if(weapon.CanFire())
+                {
+                    weapon.Fire();
+                }
+            }
 
             _moveDirection = movement;
             controller.debugMove = _moveDirection;
