@@ -1,25 +1,24 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using DemoGame.Player.Input;
+using UnityEngine;
 
 namespace DemoGame.Player
 {
     /// <summary>
-    /// Manages character rotation according to CharacterInput
+    ///     Manages character rotation according to CharacterInput
     /// </summary>
     public class Rotation : MonoBehaviour
     {
+        private InputManager input;
 
-        private Input.InputManager input;
-
-        void Awake()
+        private void Awake()
         {
-            input = GetComponent<Input.InputManager>();
+            input = GetComponent<InputManager>();
         }
 
         /// <summary>
-        /// Run update like classic unity's Update
-        /// We use an other method here because the calling must be controlled by CharacterNetwork
-        /// We can't use standard Update method because Unity update order is non-deterministic
+        ///     Run update like classic unity's Update
+        ///     We use an other method here because the calling must be controlled by CharacterNetwork
+        ///     We can't use standard Update method because Unity update order is non-deterministic
         /// </summary>
         /// <param name="delta"></param>
         public void RunUpdate(float delta)

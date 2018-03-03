@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using UnityEngine;
 
 namespace DemoGame.Entity.Projectile
 {
@@ -9,13 +8,13 @@ namespace DemoGame.Entity.Projectile
         protected override void KillFrameReached()
         {
             Debug.Log("killframe reached");
-            var frame = this._currentFrame;
-            Vector3 hitPoint = this.GetPositionAtFrame(frame);
+            var frame = _currentFrame;
+            var hitPoint = GetPositionAtFrame(frame);
 
-            this.OnHitDirect(new RaycastHit(), hitPoint);
+            OnHitDirect(new RaycastHit(), hitPoint);
 
             // needs referal
-            OnHitIndirect(UnityEngine.Physics.OverlapSphere(hitPoint, _explosionRadius).ToList(), hitPoint);
+            OnHitIndirect(Physics.OverlapSphere(hitPoint, _explosionRadius).ToList(), hitPoint);
 
             base.KillFrameReached();
         }
@@ -26,28 +25,26 @@ namespace DemoGame.Entity.Projectile
         protected override void ResolveCollisions(double frame, float frameDeltaTime)
         {
             // 1 - Network collision
-            bool collided = false;
+            var collided = false;
 
-            Vector3 origin = this.GetPositionAtFrame(frame);
-            float distance = (this._velocity * frameDeltaTime).magnitude;
+            var origin = GetPositionAtFrame(frame);
+            var distance = (_velocity * frameDeltaTime).magnitude;
 
-            Ray ray = new Ray(origin, this._velocity.normalized);
-            List<RaycastHit> hits = UnityEngine.Physics.RaycastAll(ray).ToList();
+            var ray = new Ray(origin, _velocity.normalized);
+            var hits = Physics.RaycastAll(ray).ToList();
 
-            Vector3 hitPoint = origin;
+            var hitPoint = origin;
 
-            for (int i = 0; i < hits.Count; i++)
+            for (var i = 0; i < hits.Count; i++)
             {
-                RaycastHit hit = hits[i];
+                var hit = hits[i];
 
-                if (this._ignoreGameObjects.Contains(hit.collider.gameObject) == false)
-                {
+                if (_ignoreGameObjects.Contains(hit.collider.gameObject) == false)
                     if (hit.distance < distance)
                     {
                         collided = true;
-                        this.OnHitDirect(hit, origin + (ray.direction * hit.distance));
+                        OnHitDirect(hit, origin + ray.direction * hit.distance);
                     }
-                }
             }
 
             // 2 - Non network collision (only process if hits nothing)
@@ -55,18 +52,18 @@ namespace DemoGame.Entity.Projectile
             {
                 RaycastHit hit;
 
-                if (Physics.Raycast(ray, out hit, distance, (1 << LayerMask.NameToLayer("world"))))
+                if (Physics.Raycast(ray, out hit, distance, 1 << LayerMask.NameToLayer("world")))
                 {
                     hitPoint = hit.point;
                     // hit the world
-                    this.OnHitDirect(new RaycastHit(), hit.point);
+                    OnHitDirect(new RaycastHit(), hit.point);
                     collided = true;
                 }
             }
 
             if (collided)
             {
-                var indirectHits = UnityEngine.Physics.OverlapSphere(hitPoint, _explosionRadius).ToList();
+                var indirectHits = Physics.OverlapSphere(hitPoint, _explosionRadius).ToList();
                 OnHitIndirect(indirectHits, hitPoint);
             }
         }
@@ -74,16 +71,7 @@ namespace DemoGame.Entity.Projectile
         internal override void OnHitDirect(RaycastHit hit, Vector3 position)
         {
             if (_canImpact)
-            {
                 base.OnHitDirect(hit, position);
-
-                /*var impact = Instantiate(_impactParticle);
-
-                impact.transform.position = position;
-                impact.transform.rotation = Quaternion.identity;
-
-                PoolingManager.Instance.Despawn("PROJECTILE_ROCKETLAUNCHER", this.gameObject);*/
-            }
         }
     }
 }

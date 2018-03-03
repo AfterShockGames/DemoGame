@@ -1,50 +1,42 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
 
 namespace DemoGame.Network
 {
     /// <summary>
-    /// Designate a Player
+    ///     Designate a Player
     /// </summary>
     [NetworkSettings(sendInterval = 1, channel = 0)]
     public class RemotePlayer : NetworkBehaviour
     {
+        [SerializeField] private GameObject characterPrefab;
 
-        private bool isInit = false;
-        private float nextUpdate = 0;
-
-        [SerializeField]
-        private GameObject characterPrefab;
-
-        [SyncVar]
-        public string DisplayName = "unnamed";
-
-        [SyncVar]
-        public short Ping = 999;
-
-        [SyncVar]
-        public NetworkInstanceId SpawnedCharacterID;
-
-        private int hostID;
         private int connID;
 
-        void Start()
+        [SyncVar] public string DisplayName = "unnamed";
+
+        private int hostID;
+
+        private bool isInit;
+        private float nextUpdate;
+
+        [SyncVar] public short Ping = 999;
+
+        [SyncVar] public NetworkInstanceId SpawnedCharacterID;
+
+        private void Start()
         {
             transform.parent = PlayerManager.Instance.transform;
             if (isLocalPlayer)
-            {
-                //Here we set a name for this player (from PlayerPref for example)
                 CmdSetDisplayName("SomeName");
-            }
         }
 
-        void Update()
+        private void Update()
         {
             //Init some values (first frame only)
             if (isServer && !isInit)
             {
-                NetworkIdentity identity = GetComponent<NetworkIdentity>();
+                var identity = GetComponent<NetworkIdentity>();
                 if (identity.connectionToClient != null)
                 {
                     hostID = identity.connectionToClient.hostId;
@@ -63,36 +55,34 @@ namespace DemoGame.Network
                 nextUpdate = Time.time + GetNetworkSendInterval();
 
                 byte error;
-                this.Ping = (short)NetworkTransport.GetCurrentRTT(hostID, connID, out error);
+                Ping = (short) NetworkTransport.GetCurrentRTT(hostID, connID, out error);
             }
 
             //TODO remove spawn code
             if (Input.GetKeyUp(KeyCode.K))
-            {
                 CmdSpawnPlayer();
-            }
         }
 
         /// <summary>
-        /// Set player name
+        ///     Set player name
         /// </summary>
         /// <param name="name"></param>
         [Command]
-        void CmdSetDisplayName(string name)
+        private void CmdSetDisplayName(string name)
         {
-            this.DisplayName = name;
-            this.gameObject.name = "Player " + name;
+            DisplayName = name;
+            gameObject.name = "Player " + name;
         }
 
         /// <summary>
-        /// Spawn a new character for this player
+        ///     Spawn a new character for this player
         /// </summary>
         [Command]
         public void CmdSpawnPlayer()
         {
             if (ClientScene.FindLocalObject(SpawnedCharacterID) == null)
             {
-                var go = (GameObject)Instantiate(characterPrefab, Vector3.up, Quaternion.identity);
+                var go = Instantiate(characterPrefab, Vector3.up, Quaternion.identity);
                 NetworkServer.AddPlayerForConnection(GetComponent<NetworkIdentity>().connectionToClient, go, 1);
                 SpawnedCharacterID = go.GetComponent<NetworkIdentity>().netId;
             }
@@ -105,12 +95,9 @@ namespace DemoGame.Network
         public GameObject GetCharacterObject()
         {
             if (SpawnedCharacterID == null)
-            {
                 return null;
-            }
 
             return ClientScene.FindLocalObject(SpawnedCharacterID);
         }
-
     }
 }

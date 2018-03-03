@@ -1,18 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
 
 namespace DemoGame.Player.Input
 {
     /// <summary>
-    /// Internal an clean struct to store and transmit inout states
+    ///     Internal an clean struct to store and transmit inout states
     /// </summary>
     /// <remarks>
-    /// Maybe we don't need float precision for inputVertical or Horizontal
-    /// We can store it in short or ints by multipling and rounding values.
-    /// Just make sure to do it here so client and server simulate using the same rounded values
+    ///     Maybe we don't need float precision for inputVertical or Horizontal
+    ///     We can store it in short or ints by multipling and rounding values.
+    ///     Just make sure to do it here so client and server simulate using the same rounded values
     /// </remarks>
-    [System.Serializable]
+    [Serializable]
     public struct State
     {
         public int InputState;
@@ -33,34 +31,27 @@ namespace DemoGame.Player.Input
         {
             get
             {
-                float horizontalInput = 0f;
+                var horizontalInput = 0f;
 
                 if (Left)
-                {
                     horizontalInput += -1.0f;
-                }
                 if (Right)
-                {
                     horizontalInput += 1.0f;
-                }
 
                 return horizontalInput;
             }
         }
+
         public float VerticalInput
         {
             get
             {
-                float verticalInput = 0f;
+                var verticalInput = 0f;
 
                 if (Backward)
-                {
                     verticalInput += -1.0f;
-                }
                 if (Forward)
-                {
                     verticalInput += 1.0f;
-                }
 
                 return verticalInput;
             }
@@ -68,22 +59,22 @@ namespace DemoGame.Player.Input
 
         public void setPitch(float value)
         {
-            Pitch = (short)(value * 10);
+            Pitch = (short) (value * 10);
         }
 
         public void setYaw(float value)
         {
-            Yaw = (short)(value * 10);
+            Yaw = (short) (value * 10);
         }
 
         public float getPitch()
         {
-            return (float)Pitch / 10;
+            return (float) Pitch / 10;
         }
 
         public float getYaw()
         {
-            return (float)Yaw / 10;
+            return (float) Yaw / 10;
         }
     }
 }

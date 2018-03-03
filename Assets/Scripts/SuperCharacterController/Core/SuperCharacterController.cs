@@ -1,74 +1,62 @@
 ﻿// External release version 2.0.0
 
-using UnityEngine;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// Custom character controller, to be used by attaching the component to an object
-/// and writing scripts attached to the same object that recieve the "SuperUpdate" message
+///     Custom character controller, to be used by attaching the component to an object
+///     and writing scripts attached to the same object that recieve the "SuperUpdate" message
 /// </summary>
 public class SuperCharacterController : MonoBehaviour
 {
-    [SerializeField]
-    public Vector3 debugMove = Vector3.zero;
+    private const float Tolerance = 0.05f;
+    private const float TinyTolerance = 0.01f;
+    private const string TemporaryLayer = "TempCast";
+    private const int MaxPushbackIterations = 2;
 
-    [SerializeField]
-    bool fixedTimeStep;
+    private static SuperCollisionType defaultCollisionType;
+    private bool clamping = true;
 
-    [SerializeField]
-    int fixedUpdatesPerSecond;
+    [SerializeField] private bool debugGrounding;
 
-    [SerializeField]
-    bool debugSpheres;
+    [SerializeField] public Vector3 debugMove = Vector3.zero;
 
-    [SerializeField]
-    bool debugGrounding;
+    [SerializeField] private bool debugPushbackMesssages;
 
-    [SerializeField]
-    bool debugPushbackMesssages;
+    [SerializeField] private bool debugSpheres;
 
-    /// <summary>
-    /// Describes the Transform of the object we are standing on as well as it's CollisionType, as well
-    /// as how far the ground is below us and what angle it is in relation to the controller.
-    /// </summary>
-    [SerializeField]
-    public struct Ground
-    {
-        public RaycastHit hit { get; set; }
-        public RaycastHit nearHit { get; set; }
-        public RaycastHit farHit { get; set; }
-        public RaycastHit secondaryHit { get; set; }
-        public SuperCollisionType collisionType { get; set; }
-        public Transform transform { get; set; }
+    private float fixedDeltaTime;
 
-        public Ground(RaycastHit hit, RaycastHit nearHit, RaycastHit farHit, RaycastHit secondaryHit, SuperCollisionType superCollisionType, Transform hitTransform)
+    [SerializeField] private bool fixedTimeStep;
+
+    [SerializeField] private int fixedUpdatesPerSecond;
+
+    private Vector3 groundOffset;
+
+    private List<Collider> ignoredColliders;
+    private List<IgnoredCollider> ignoredColliderStack;
+
+    private Vector3 initialPosition;
+    private Vector3 lastGroundPosition;
+
+    [SerializeField] private Collider ownCollider;
+
+    [SerializeField] public float radius = 0.5f;
+
+    private bool slopeLimiting = true;
+
+    [SerializeField] private readonly CollisionSphere[] spheres =
+        new CollisionSphere[3]
         {
-            this.hit = hit;
-            this.nearHit = nearHit;
-            this.farHit = farHit;
-            this.secondaryHit = secondaryHit;
-            this.collisionType = superCollisionType;
-            this.transform = hitTransform;
-        }
-    }
-
-    [SerializeField]
-    CollisionSphere[] spheres =
-        new CollisionSphere[3] {
             new CollisionSphere(0.5f, true, false),
             new CollisionSphere(1.0f, false, false),
-            new CollisionSphere(1.5f, false, true),
+            new CollisionSphere(1.5f, false, true)
         };
 
+    private int TemporaryLayerIndex;
+
     public LayerMask Walkable;
-
-    [SerializeField]
-    Collider ownCollider;
-
-    [SerializeField]
-    public float radius = 0.5f;
 
     public float deltaTime { get; protected set; }
     public SuperGround currentGround { get; private set; }
@@ -76,36 +64,29 @@ public class SuperCharacterController : MonoBehaviour
     public CollisionSphere head { get; private set; }
 
     /// <summary>
-    /// Total height of the controller from the bottom of the feet to the top of the head
+    ///     Total height of the controller from the bottom of the feet to the top of the head
     /// </summary>
-    public float height { get { return Vector3.Distance(SpherePosition(head), SpherePosition(feet)) + radius * 2; } }
+    public float height
+    {
+        get { return Vector3.Distance(SpherePosition(head), SpherePosition(feet)) + radius * 2; }
+    }
 
-    public Vector3 up { get { return transform.up; } }
-    public Vector3 down { get { return -transform.up; } }
+    public Vector3 up
+    {
+        get { return transform.up; }
+    }
+
+    public Vector3 down
+    {
+        get { return -transform.up; }
+    }
+
     public List<SuperCollision> collisionData { get; private set; }
     public Transform currentlyClampedTo { get; set; }
     public float heightScale { get; set; }
     public float radiusScale { get; set; }
 
-    private Vector3 initialPosition;
-    private Vector3 groundOffset;
-    private Vector3 lastGroundPosition;
-    private bool clamping = true;
-    private bool slopeLimiting = true;
-
-    private List<Collider> ignoredColliders;
-    private List<IgnoredCollider> ignoredColliderStack;
-
-    private const float Tolerance = 0.05f;
-    private const float TinyTolerance = 0.01f;
-    private const string TemporaryLayer = "TempCast";
-    private const int MaxPushbackIterations = 2;
-    private int TemporaryLayerIndex;
-    private float fixedDeltaTime;
-
-    private static SuperCollisionType defaultCollisionType;
-
-    void Awake()
+    private void Awake()
     {
         collisionData = new List<SuperCollision>();
 
@@ -139,14 +120,16 @@ public class SuperCharacterController : MonoBehaviour
             Debug.LogError("[SuperCharacterController] Head not found on controller");
 
         if (defaultCollisionType == null)
-            defaultCollisionType = new GameObject("DefaultSuperCollisionType", typeof(SuperCollisionType)).GetComponent<SuperCollisionType>();
+            defaultCollisionType =
+                new GameObject("DefaultSuperCollisionType", typeof(SuperCollisionType)).GetComponent<SuperCollisionType>
+                    ();
 
         currentGround = new SuperGround(Walkable, this);
 
-		gameObject.SendMessage("SuperStart", SendMessageOptions.DontRequireReceiver);
+        gameObject.SendMessage("SuperStart", SendMessageOptions.DontRequireReceiver);
     }
 
-    void Update()
+    private void Update()
     {
         Debug.Log("I am not called anymore!");
         // If we are using a fixed timestep, ensure we run the main update loop
@@ -157,11 +140,10 @@ public class SuperCharacterController : MonoBehaviour
             deltaTime = Time.deltaTime;
 
             SingleUpdate();
-            return;
         }
         else
         {
-            float delta = Time.deltaTime;
+            var delta = Time.deltaTime;
 
             while (delta > fixedDeltaTime)
             {
@@ -184,8 +166,8 @@ public class SuperCharacterController : MonoBehaviour
     protected void SingleUpdate()
     {
         // Check if we are clamped to an object implicity or explicity
-        bool isClamping = clamping || currentlyClampedTo != null;
-        Transform clampedTo = currentlyClampedTo != null ? currentlyClampedTo : currentGround.transform;
+        var isClamping = clamping || currentlyClampedTo != null;
+        var clampedTo = currentlyClampedTo != null ? currentlyClampedTo : currentGround.transform;
 
         if (isClamping && clampedTo != null && clampedTo.position - lastGroundPosition != Vector3.zero)
             transform.position += clampedTo.position - lastGroundPosition;
@@ -218,10 +200,9 @@ public class SuperCharacterController : MonoBehaviour
 
         if (debugGrounding)
             currentGround.DebugGround(true, true, true, true, true);
-
     }
 
-    void ProbeGround(int iter)
+    private void ProbeGround(int iter)
     {
         PushIgnoredColliders();
         currentGround.ProbeGround(SpherePosition(feet), iter);
@@ -229,42 +210,39 @@ public class SuperCharacterController : MonoBehaviour
     }
 
     /// <summary>
-    /// Prevents the player from walking up slopes of a larger angle than the object's SlopeLimit.
+    ///     Prevents the player from walking up slopes of a larger angle than the object's SlopeLimit.
     /// </summary>
     /// <returns>True if the controller attemped to ascend a too steep slope and had their movement limited</returns>
-    bool SlopeLimit()
+    private bool SlopeLimit()
     {
-        Vector3 n = currentGround.PrimaryNormal();
-        float a = Vector3.Angle(n, up);
+        var n = currentGround.PrimaryNormal();
+        var a = Vector3.Angle(n, up);
 
         if (a > currentGround.superCollisionType.SlopeLimit)
         {
-            Vector3 absoluteMoveDirection = Math3d.ProjectVectorOnPlane(n, transform.position - initialPosition);
+            var absoluteMoveDirection = Math3d.ProjectVectorOnPlane(n, transform.position - initialPosition);
 
             // Retrieve a vector pointing down the slope
-            Vector3 r = Vector3.Cross(n, down);
-            Vector3 v = Vector3.Cross(r, n);
+            var r = Vector3.Cross(n, down);
+            var v = Vector3.Cross(r, n);
 
-            float angle = Vector3.Angle(absoluteMoveDirection, v);
+            var angle = Vector3.Angle(absoluteMoveDirection, v);
 
             if (angle <= 90.0f)
                 return false;
 
             // Calculate where to place the controller on the slope, or at the bottom, based on the desired movement distance
-            Vector3 resolvedPosition = Math3d.ProjectPointOnLine(initialPosition, r, transform.position);
-            Vector3 direction = Math3d.ProjectVectorOnPlane(n, resolvedPosition - transform.position);
+            var resolvedPosition = Math3d.ProjectPointOnLine(initialPosition, r, transform.position);
+            var direction = Math3d.ProjectVectorOnPlane(n, resolvedPosition - transform.position);
 
             RaycastHit hit;
 
             // Check if our path to our resolved position is blocked by any colliders
-            if (Physics.CapsuleCast(SpherePosition(feet), SpherePosition(head), radius, direction.normalized, out hit, direction.magnitude, Walkable))
-            {
+            if (Physics.CapsuleCast(SpherePosition(feet), SpherePosition(head), radius, direction.normalized, out hit,
+                direction.magnitude, Walkable))
                 transform.position += v.normalized * hit.distance;
-            }
             else
-            {
                 transform.position += direction;
-            }
 
             return true;
         }
@@ -272,9 +250,9 @@ public class SuperCharacterController : MonoBehaviour
         return false;
     }
 
-    void ClampToGround()
+    private void ClampToGround()
     {
-        float d = currentGround.Distance();
+        var d = currentGround.Distance();
         transform.position -= up * d;
     }
 
@@ -304,27 +282,27 @@ public class SuperCharacterController : MonoBehaviour
     }
 
     /// <summary>
-    /// Provides raycast data based on where a SphereCast would contact the specified normal
-    /// Raycasting downwards from a point along the controller's bottom sphere, based on the provided
-    /// normal
+    ///     Provides raycast data based on where a SphereCast would contact the specified normal
+    ///     Raycasting downwards from a point along the controller's bottom sphere, based on the provided
+    ///     normal
     /// </summary>
     /// <param name="groundNormal">Normal of a triangle assumed to be directly below the controller</param>
     /// <param name="hit">Simulated SphereCast data</param>
     /// <returns>True if the raycast is successful</returns>
     private bool SimulateSphereCast(Vector3 groundNormal, out RaycastHit hit)
     {
-        float groundAngle = Vector3.Angle(groundNormal, up) * Mathf.Deg2Rad;
+        var groundAngle = Vector3.Angle(groundNormal, up) * Mathf.Deg2Rad;
 
-        Vector3 secondaryOrigin = transform.position + up * Tolerance;
+        var secondaryOrigin = transform.position + up * Tolerance;
 
         if (!Mathf.Approximately(groundAngle, 0))
         {
-            float horizontal = Mathf.Sin(groundAngle) * radius;
-            float vertical = (1.0f - Mathf.Cos(groundAngle)) * radius;
+            var horizontal = Mathf.Sin(groundAngle) * radius;
+            var vertical = (1.0f - Mathf.Cos(groundAngle)) * radius;
 
             // Retrieve a vector pointing up the slope
-            Vector3 r2 = Vector3.Cross(groundNormal, down);
-            Vector3 v2 = -Vector3.Cross(r2, groundNormal);
+            var r2 = Vector3.Cross(groundNormal, down);
+            var v2 = -Vector3.Cross(r2, groundNormal);
 
             secondaryOrigin += Math3d.ProjectVectorOnPlane(up, v2).normalized * horizontal + up * vertical;
         }
@@ -336,101 +314,89 @@ public class SuperCharacterController : MonoBehaviour
 
             return true;
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     /// <summary>
-    /// Check if any of the CollisionSpheres are colliding with any walkable objects in the world.
-    /// If they are, apply a proper pushback and retrieve the collision data
+    ///     Check if any of the CollisionSpheres are colliding with any walkable objects in the world.
+    ///     If they are, apply a proper pushback and retrieve the collision data
     /// </summary>
-    void RecursivePushback(int depth, int maxDepth)
+    private void RecursivePushback(int depth, int maxDepth)
     {
         PushIgnoredColliders();
 
         collisionData.Clear();
 
-        bool contact = false;
+        var contact = false;
 
         foreach (var sphere in spheres)
+        foreach (var col in Physics.OverlapSphere(SpherePosition(sphere), radius, Walkable))
         {
-            foreach (Collider col in Physics.OverlapSphere((SpherePosition(sphere)), radius, Walkable))
+            if (col.isTrigger)
+                continue;
+
+            var position = SpherePosition(sphere);
+            var contactPoint = SuperCollider.ClosestPointOnSurface(col, position, radius);
+
+            if (contactPoint != Vector3.zero)
             {
-                if (col.isTrigger)
-                    continue;
+                if (debugPushbackMesssages)
+                    DebugDraw.DrawMarker(contactPoint, 2.0f, Color.cyan, 0.0f, false);
 
-                Vector3 position = SpherePosition(sphere);
-                Vector3 contactPoint = SuperCollider.ClosestPointOnSurface(col, position, radius);
+                var v = contactPoint - position;
 
-                if (contactPoint != Vector3.zero)
+                if (v != Vector3.zero)
                 {
-                    if (debugPushbackMesssages)
-                        DebugDraw.DrawMarker(contactPoint, 2.0f, Color.cyan, 0.0f, false);
+                    // Cache the collider's layer so that we can cast against it
+                    var layer = col.gameObject.layer;
 
-                    Vector3 v = contactPoint - position;
+                    col.gameObject.layer = TemporaryLayerIndex;
 
-                    if (v != Vector3.zero)
-                    {
-                        // Cache the collider's layer so that we can cast against it
-                        int layer = col.gameObject.layer;
+                    // Check which side of the normal we are on
+                    var facingNormal = Physics.SphereCast(new Ray(position, v.normalized), TinyTolerance,
+                        v.magnitude + TinyTolerance, 1 << TemporaryLayerIndex);
 
-                        col.gameObject.layer = TemporaryLayerIndex;
+                    col.gameObject.layer = layer;
 
-                        // Check which side of the normal we are on
-                        bool facingNormal = Physics.SphereCast(new Ray(position, v.normalized), TinyTolerance, v.magnitude + TinyTolerance, 1 << TemporaryLayerIndex);
-
-                        col.gameObject.layer = layer;
-
-                        // Orient and scale our vector based on which side of the normal we are situated
-                        if (facingNormal)
-                        {
-                            if (Vector3.Distance(position, contactPoint) < radius)
-                            {
-                                v = v.normalized * (radius - v.magnitude) * -1;
-                            }
-                            else
-                            {
-                                // A previously resolved collision has had a side effect that moved us outside this collider
-                                continue;
-                            }
-                        }
+                    // Orient and scale our vector based on which side of the normal we are situated
+                    if (facingNormal)
+                        if (Vector3.Distance(position, contactPoint) < radius)
+                            v = v.normalized * (radius - v.magnitude) * -1;
                         else
-                        {
-                            v = v.normalized * (radius + v.magnitude);
-                        }
+                            continue;
+                    else
+                        v = v.normalized * (radius + v.magnitude);
 
-                        contact = true;
+                    contact = true;
 
-                        transform.position += v;
+                    transform.position += v;
 
-                        col.gameObject.layer = TemporaryLayerIndex;
+                    col.gameObject.layer = TemporaryLayerIndex;
 
-                        // Retrieve the surface normal of the collided point
-                        RaycastHit normalHit;
+                    // Retrieve the surface normal of the collided point
+                    RaycastHit normalHit;
 
-                        Physics.SphereCast(new Ray(position + v, contactPoint - (position + v)), TinyTolerance, out normalHit, 1 << TemporaryLayerIndex);
+                    Physics.SphereCast(new Ray(position + v, contactPoint - (position + v)), TinyTolerance,
+                        out normalHit, 1 << TemporaryLayerIndex);
 
-                        col.gameObject.layer = layer;
+                    col.gameObject.layer = layer;
 
-                        SuperCollisionType superColType = col.gameObject.GetComponent<SuperCollisionType>();
+                    var superColType = col.gameObject.GetComponent<SuperCollisionType>();
 
-                        if (superColType == null)
-                            superColType = defaultCollisionType;
+                    if (superColType == null)
+                        superColType = defaultCollisionType;
 
-                        // Our collision affected the collider; add it to the collision data
-                        var collision = new SuperCollision()
-                        {
-                            collisionSphere = sphere,
-                            superCollisionType = superColType,
-                            gameObject = col.gameObject,
-                            point = contactPoint,
-                            normal = normalHit.normal
-                        };
+                    // Our collision affected the collider; add it to the collision data
+                    var collision = new SuperCollision
+                    {
+                        collisionSphere = sphere,
+                        superCollisionType = superColType,
+                        gameObject = col.gameObject,
+                        point = contactPoint,
+                        normal = normalHit.normal
+                    };
 
-                        collisionData.Add(collision);
-                    }
+                    collisionData.Add(collision);
                 }
             }
         }
@@ -438,30 +404,16 @@ public class SuperCharacterController : MonoBehaviour
         PopIgnoredColliders();
 
         if (depth < maxDepth && contact)
-        {
             RecursivePushback(depth + 1, maxDepth);
-        }
-    }
-
-    protected struct IgnoredCollider
-    {
-        public Collider collider;
-        public int layer;
-
-        public IgnoredCollider(Collider collider, int layer)
-        {
-            this.collider = collider;
-            this.layer = layer;
-        }
     }
 
     private void PushIgnoredColliders()
     {
         ignoredColliderStack.Clear();
 
-        for (int i = 0; i < ignoredColliders.Count; i++)
+        for (var i = 0; i < ignoredColliders.Count; i++)
         {
-            Collider col = ignoredColliders[i];
+            var col = ignoredColliders[i];
             ignoredColliderStack.Add(new IgnoredCollider(col, col.gameObject.layer));
             col.gameObject.layer = TemporaryLayerIndex;
         }
@@ -469,21 +421,20 @@ public class SuperCharacterController : MonoBehaviour
 
     private void PopIgnoredColliders()
     {
-        for (int i = 0; i < ignoredColliderStack.Count; i++)
+        for (var i = 0; i < ignoredColliderStack.Count; i++)
         {
-            IgnoredCollider ic = ignoredColliderStack[i];
+            var ic = ignoredColliderStack[i];
             ic.collider.gameObject.layer = ic.layer;
         }
 
         ignoredColliderStack.Clear();
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
 
         if (debugSpheres)
-        {
             if (spheres != null)
             {
                 if (heightScale == 0) heightScale = 1;
@@ -494,15 +445,13 @@ public class SuperCharacterController : MonoBehaviour
                     Gizmos.DrawWireSphere(SpherePosition(sphere), radius);
                 }
             }
-        }
     }
 
     public Vector3 SpherePosition(CollisionSphere sphere)
     {
         if (sphere.isFeet)
             return transform.position + sphere.offset * up;
-        else
-            return transform.position + sphere.offset * up * heightScale;
+        return transform.position + sphere.offset * up * heightScale;
     }
 
     public bool PointBelowHead(Vector3 point)
@@ -530,61 +479,88 @@ public class SuperCharacterController : MonoBehaviour
         ignoredColliders.Clear();
     }
 
+    /// <summary>
+    ///     Describes the Transform of the object we are standing on as well as it's CollisionType, as well
+    ///     as how far the ground is below us and what angle it is in relation to the controller.
+    /// </summary>
+    [SerializeField]
+    public struct Ground
+    {
+        public RaycastHit hit { get; set; }
+        public RaycastHit nearHit { get; set; }
+        public RaycastHit farHit { get; set; }
+        public RaycastHit secondaryHit { get; set; }
+        public SuperCollisionType collisionType { get; set; }
+        public Transform transform { get; set; }
+
+        public Ground(RaycastHit hit, RaycastHit nearHit, RaycastHit farHit, RaycastHit secondaryHit,
+            SuperCollisionType superCollisionType, Transform hitTransform)
+        {
+            this.hit = hit;
+            this.nearHit = nearHit;
+            this.farHit = farHit;
+            this.secondaryHit = secondaryHit;
+            collisionType = superCollisionType;
+            transform = hitTransform;
+        }
+    }
+
+    protected struct IgnoredCollider
+    {
+        public Collider collider;
+        public int layer;
+
+        public IgnoredCollider(Collider collider, int layer)
+        {
+            this.collider = collider;
+            this.layer = layer;
+        }
+    }
+
     public class SuperGround
     {
+        private const float groundingUpperBoundAngle = 60.0f;
+        private const float groundingMaxPercentFromCenter = 0.85f;
+        private const float groundingMinPercentFromcenter = 0.50f;
+        private readonly SuperCharacterController controller;
+        private GroundHit farGround;
+        private GroundHit flushGround;
+        private GroundHit nearGround;
+
+        private GroundHit primaryGround;
+        private GroundHit stepGround;
+
+        private readonly LayerMask walkable;
+
         public SuperGround(LayerMask walkable, SuperCharacterController controller)
         {
             this.walkable = walkable;
             this.controller = controller;
         }
 
-        private class GroundHit
-        {
-            public Vector3 point { get; private set; }
-            public Vector3 normal { get; private set; }
-            public float distance { get; private set; }
-
-            public GroundHit(Vector3 point, Vector3 normal, float distance)
-            {
-                this.point = point;
-                this.normal = normal;
-                this.distance = distance;
-            }
-        }
-
-        private LayerMask walkable;
-        private SuperCharacterController controller;
-
-        private GroundHit primaryGround;
-        private GroundHit nearGround;
-        private GroundHit farGround;
-        private GroundHit stepGround;
-        private GroundHit flushGround;
-
         public SuperCollisionType superCollisionType { get; private set; }
         public Transform transform { get; private set; }
 
-        private const float groundingUpperBoundAngle = 60.0f;
-        private const float groundingMaxPercentFromCenter = 0.85f;
-        private const float groundingMinPercentFromcenter = 0.50f;
-
         /// <summary>
-        /// Scan the surface below us for ground. Follow up the initial scan with subsequent scans
-        /// designed to test what kind of surface we are standing above and handle different edge cases
+        ///     Scan the surface below us for ground. Follow up the initial scan with subsequent scans
+        ///     designed to test what kind of surface we are standing above and handle different edge cases
         /// </summary>
         /// <param name="origin">Center of the sphere for the initial SphereCast</param>
-        /// <param name="iter">Debug tool to print out which ProbeGround iteration is being run (3 are run each frame for the controller)</param>
+        /// <param name="iter">
+        ///     Debug tool to print out which ProbeGround iteration is being run (3 are run each frame for the
+        ///     controller)
+        /// </param>
         public void ProbeGround(Vector3 origin, int iter)
         {
             ResetGrounds();
 
-            Vector3 up = controller.up;
-            Vector3 down = -up;
+            var up = controller.up;
+            var down = -up;
 
-            Vector3 o = origin + (up * Tolerance);
+            var o = origin + up * Tolerance;
 
             // Reduce our radius by Tolerance squared to avoid failing the SphereCast due to clipping with walls
-            float smallerRadius = controller.radius - (Tolerance * Tolerance);
+            var smallerRadius = controller.radius - Tolerance * Tolerance;
 
             RaycastHit hit;
 
@@ -593,9 +569,7 @@ public class SuperCharacterController : MonoBehaviour
                 var superColType = hit.collider.gameObject.GetComponent<SuperCollisionType>();
 
                 if (superColType == null)
-                {
                     superColType = defaultCollisionType;
-                }
 
                 superCollisionType = superColType;
                 transform = hit.transform;
@@ -608,20 +582,22 @@ public class SuperCharacterController : MonoBehaviour
 
                 // If we are standing on a perfectly flat surface, we cannot be either on an edge,
                 // On a slope or stepping off a ledge
-                if (Vector3.Distance(Math3d.ProjectPointOnPlane(controller.up, controller.transform.position, hit.point), controller.transform.position) < TinyTolerance)
-                {
+                if (
+                    Vector3.Distance(
+                        Math3d.ProjectPointOnPlane(controller.up, controller.transform.position, hit.point),
+                        controller.transform.position) < TinyTolerance)
                     return;
-                }
 
                 // As we are standing on an edge, we need to retrieve the normals of the two
                 // faces on either side of the edge and store them in nearHit and farHit
 
-                Vector3 toCenter = Math3d.ProjectVectorOnPlane(up, (controller.transform.position - hit.point).normalized * TinyTolerance);
+                var toCenter = Math3d.ProjectVectorOnPlane(up,
+                    (controller.transform.position - hit.point).normalized * TinyTolerance);
 
-                Vector3 awayFromCenter = Quaternion.AngleAxis(-80.0f, Vector3.Cross(toCenter, up)) * -toCenter;
+                var awayFromCenter = Quaternion.AngleAxis(-80.0f, Vector3.Cross(toCenter, up)) * -toCenter;
 
-                Vector3 nearPoint = hit.point + toCenter + (up * TinyTolerance);
-                Vector3 farPoint = hit.point + (awayFromCenter * 3);
+                var nearPoint = hit.point + toCenter + up * TinyTolerance;
+                var farPoint = hit.point + awayFromCenter * 3;
 
                 RaycastHit nearHit;
                 RaycastHit farHit;
@@ -637,10 +613,10 @@ public class SuperCharacterController : MonoBehaviour
                 if (Vector3.Angle(hit.normal, up) > superColType.StandAngle)
                 {
                     // Retrieve a vector pointing down the slope
-                    Vector3 r = Vector3.Cross(hit.normal, down);
-                    Vector3 v = Vector3.Cross(r, hit.normal);
+                    var r = Vector3.Cross(hit.normal, down);
+                    var v = Vector3.Cross(r, hit.normal);
 
-                    Vector3 flushOrigin = hit.point + hit.normal * TinyTolerance;
+                    var flushOrigin = hit.point + hit.normal * TinyTolerance;
 
                     RaycastHit flushHit;
 
@@ -649,13 +625,8 @@ public class SuperCharacterController : MonoBehaviour
                         RaycastHit sphereCastHit;
 
                         if (SimulateSphereCast(flushHit.normal, out sphereCastHit))
-                        {
-                            flushGround = new GroundHit(sphereCastHit.point, sphereCastHit.normal, sphereCastHit.distance);
-                        }
-                        else
-                        {
-                            // Uh oh
-                        }
+                            flushGround = new GroundHit(sphereCastHit.point, sphereCastHit.normal,
+                                sphereCastHit.distance);
                     }
                 }
 
@@ -667,24 +638,20 @@ public class SuperCharacterController : MonoBehaviour
                     var col = nearHit.collider.gameObject.GetComponent<SuperCollisionType>();
 
                     if (col == null)
-                    {
                         col = defaultCollisionType;
-                    }
 
                     // We contacted the wall of the ledge, rather than the landing. Raycast down
                     // the wall to retrieve the proper landing
                     if (Vector3.Angle(nearHit.normal, up) > superColType.StandAngle)
                     {
                         // Retrieve a vector pointing down the slope
-                        Vector3 r = Vector3.Cross(nearHit.normal, down);
-                        Vector3 v = Vector3.Cross(r, nearHit.normal);
+                        var r = Vector3.Cross(nearHit.normal, down);
+                        var v = Vector3.Cross(r, nearHit.normal);
 
                         RaycastHit stepHit;
 
                         if (Physics.Raycast(nearPoint, v, out stepHit, Mathf.Infinity, walkable))
-                        {
                             stepGround = new GroundHit(stepHit.point, stepHit.normal, stepHit.distance);
-                        }
                     }
                     else
                     {
@@ -699,9 +666,7 @@ public class SuperCharacterController : MonoBehaviour
                 var superColType = hit.collider.gameObject.GetComponent<SuperCollisionType>();
 
                 if (superColType == null)
-                {
                     superColType = defaultCollisionType;
-                }
 
                 superCollisionType = superColType;
                 transform = hit.transform;
@@ -709,17 +674,14 @@ public class SuperCharacterController : MonoBehaviour
                 RaycastHit sphereCastHit;
 
                 if (SimulateSphereCast(hit.normal, out sphereCastHit))
-                {
                     primaryGround = new GroundHit(sphereCastHit.point, sphereCastHit.normal, sphereCastHit.distance);
-                }
                 else
-                {
                     primaryGround = new GroundHit(hit.point, hit.normal, hit.distance);
-                }
             }
             else
             {
-                Debug.LogError("[SuperCharacterComponent]: No ground was found below the player; player has escaped level");
+                Debug.LogError(
+                    "[SuperCharacterComponent]: No ground was found below the player; player has escaped level");
             }
         }
 
@@ -743,14 +705,14 @@ public class SuperCharacterController : MonoBehaviour
             groundNormal = Vector3.zero;
 
             if (primaryGround == null || primaryGround.distance > distance)
-            {
                 return false;
-            }
 
             // Check if we are flush against a wall
             if (farGround != null && Vector3.Angle(farGround.normal, controller.up) > superCollisionType.StandAngle)
             {
-                if (flushGround != null && Vector3.Angle(flushGround.normal, controller.up) < superCollisionType.StandAngle && flushGround.distance < distance)
+                if (flushGround != null &&
+                    Vector3.Angle(flushGround.normal, controller.up) < superCollisionType.StandAngle &&
+                    flushGround.distance < distance)
                 {
                     groundNormal = flushGround.normal;
                     return true;
@@ -763,14 +725,17 @@ public class SuperCharacterController : MonoBehaviour
             if (farGround != null && !OnSteadyGround(farGround.normal, primaryGround.point))
             {
                 // Check if we are walking onto steadier ground
-                if (nearGround != null && nearGround.distance < distance && Vector3.Angle(nearGround.normal, controller.up) < superCollisionType.StandAngle && !OnSteadyGround(nearGround.normal, nearGround.point))
+                if (nearGround != null && nearGround.distance < distance &&
+                    Vector3.Angle(nearGround.normal, controller.up) < superCollisionType.StandAngle &&
+                    !OnSteadyGround(nearGround.normal, nearGround.point))
                 {
                     groundNormal = nearGround.normal;
                     return true;
                 }
 
                 // Check if we are on a step or stair
-                if (stepGround != null && stepGround.distance < distance && Vector3.Angle(stepGround.normal, controller.up) < superCollisionType.StandAngle)
+                if (stepGround != null && stepGround.distance < distance &&
+                    Vector3.Angle(stepGround.normal, controller.up) < superCollisionType.StandAngle)
                 {
                     groundNormal = stepGround.normal;
                     return true;
@@ -781,36 +746,32 @@ public class SuperCharacterController : MonoBehaviour
 
 
             if (farGround != null)
-            {
                 groundNormal = farGround.normal;
-            }
             else
-            {
                 groundNormal = primaryGround.normal;
-            }
 
             return true;
         }
 
         /// <summary>
-        /// To help the controller smoothly "fall" off surfaces and not hang on the edge of ledges,
-        /// check that the ground below us is "steady", or that the controller is not standing
-        /// on too extreme of a ledge
+        ///     To help the controller smoothly "fall" off surfaces and not hang on the edge of ledges,
+        ///     check that the ground below us is "steady", or that the controller is not standing
+        ///     on too extreme of a ledge
         /// </summary>
         /// <param name="normal">Normal of the surface to test against</param>
         /// <param name="point">Point of contact with the surface</param>
         /// <returns>True if the ground is steady</returns>
         private bool OnSteadyGround(Vector3 normal, Vector3 point)
         {
-            float angle = Vector3.Angle(normal, controller.up);
+            var angle = Vector3.Angle(normal, controller.up);
 
-            float angleRatio = angle / groundingUpperBoundAngle;
+            var angleRatio = angle / groundingUpperBoundAngle;
 
-            float distanceRatio = Mathf.Lerp(groundingMinPercentFromcenter, groundingMaxPercentFromCenter, angleRatio);
+            var distanceRatio = Mathf.Lerp(groundingMinPercentFromcenter, groundingMaxPercentFromCenter, angleRatio);
 
-            Vector3 p = Math3d.ProjectPointOnPlane(controller.up, controller.transform.position, point);
+            var p = Math3d.ProjectPointOnPlane(controller.up, controller.transform.position, point);
 
-            float distanceFromCenter = Vector3.Distance(p, controller.transform.position);
+            var distanceFromCenter = Vector3.Distance(p, controller.transform.position);
 
             return distanceFromCenter <= distanceRatio * controller.radius;
         }
@@ -840,47 +801,38 @@ public class SuperCharacterController : MonoBehaviour
         public void DebugGround(bool primary, bool near, bool far, bool flush, bool step)
         {
             if (primary && primaryGround != null)
-            {
                 DebugDraw.DrawVector(primaryGround.point, primaryGround.normal, 2.0f, 1.0f, Color.yellow, 0, false);
-            }
 
             if (near && nearGround != null)
-            {
                 DebugDraw.DrawVector(nearGround.point, nearGround.normal, 2.0f, 1.0f, Color.blue, 0, false);
-            }
 
             if (far && farGround != null)
-            {
                 DebugDraw.DrawVector(farGround.point, farGround.normal, 2.0f, 1.0f, Color.red, 0, false);
-            }
 
             if (flush && flushGround != null)
-            {
                 DebugDraw.DrawVector(flushGround.point, flushGround.normal, 2.0f, 1.0f, Color.cyan, 0, false);
-            }
 
             if (step && stepGround != null)
-            {
                 DebugDraw.DrawVector(stepGround.point, stepGround.normal, 2.0f, 1.0f, Color.green, 0, false);
-            }
         }
 
         private bool SimulateSphereCast(Vector3 groundNormal, out RaycastHit hit)
         {
-            float groundAngle = Vector3.Angle(groundNormal, controller.up) * Mathf.Deg2Rad;
+            var groundAngle = Vector3.Angle(groundNormal, controller.up) * Mathf.Deg2Rad;
 
-            Vector3 secondaryOrigin = controller.transform.position + controller.up * Tolerance;
+            var secondaryOrigin = controller.transform.position + controller.up * Tolerance;
 
             if (!Mathf.Approximately(groundAngle, 0))
             {
-                float horizontal = Mathf.Sin(groundAngle) * controller.radius;
-                float vertical = (1.0f - Mathf.Cos(groundAngle)) * controller.radius;
+                var horizontal = Mathf.Sin(groundAngle) * controller.radius;
+                var vertical = (1.0f - Mathf.Cos(groundAngle)) * controller.radius;
 
                 // Retrieve a vector pointing up the slope
-                Vector3 r2 = Vector3.Cross(groundNormal, controller.down);
-                Vector3 v2 = -Vector3.Cross(r2, groundNormal);
+                var r2 = Vector3.Cross(groundNormal, controller.down);
+                var v2 = -Vector3.Cross(r2, groundNormal);
 
-                secondaryOrigin += Math3d.ProjectVectorOnPlane(controller.up, v2).normalized * horizontal + controller.up * vertical;
+                secondaryOrigin += Math3d.ProjectVectorOnPlane(controller.up, v2).normalized * horizontal +
+                                   controller.up * vertical;
             }
 
             if (Physics.Raycast(secondaryOrigin, controller.down, out hit, Mathf.Infinity, walkable))
@@ -890,10 +842,21 @@ public class SuperCharacterController : MonoBehaviour
 
                 return true;
             }
-            else
+            return false;
+        }
+
+        private class GroundHit
+        {
+            public GroundHit(Vector3 point, Vector3 normal, float distance)
             {
-                return false;
+                this.point = point;
+                this.normal = normal;
+                this.distance = distance;
             }
+
+            public Vector3 point { get; private set; }
+            public Vector3 normal { get; private set; }
+            public float distance { get; private set; }
         }
     }
 }
@@ -901,9 +864,9 @@ public class SuperCharacterController : MonoBehaviour
 [Serializable]
 public class CollisionSphere
 {
-    public float offset;
     public bool isFeet;
     public bool isHead;
+    public float offset;
 
     public CollisionSphere(float offset, bool isFeet, bool isHead)
     {

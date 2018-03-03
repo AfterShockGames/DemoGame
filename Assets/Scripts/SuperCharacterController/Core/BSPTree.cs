@@ -1,40 +1,27 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// Recursively paritions a mesh's vertices to allow to more quickly
-/// narrow down the search for a nearest point on it's surface with respect to another
-/// point
+///     Recursively paritions a mesh's vertices to allow to more quickly
+///     narrow down the search for a nearest point on it's surface with respect to another
+///     point
 /// </summary>
 [RequireComponent(typeof(MeshCollider))]
-public class BSPTree : MonoBehaviour {
-
-    [SerializeField]
-    bool drawMeshTreeOnStart;
-
-    public class Node
-    {
-        public Vector3 partitionPoint;
-        public Vector3 partitionNormal;
-
-        public Node positiveChild;
-        public Node negativeChild;
-
-        public int[] triangles;
-    };
-
-    private int triangleCount;
-    private int vertexCount;
-    private Vector3[] vertices;
-    private int[] tris;
-    private Vector3[] triangleNormals;
+public class BSPTree : MonoBehaviour
+{
+    [SerializeField] private bool drawMeshTreeOnStart;
 
     private Mesh mesh;
 
     private Node tree;
 
-    void Awake()
+    private int triangleCount;
+    private Vector3[] triangleNormals;
+    private int[] tris;
+    private int vertexCount;
+    private Vector3[] vertices;
+
+    private void Awake()
     {
         mesh = GetComponent<MeshCollider>().sharedMesh;
 
@@ -46,9 +33,11 @@ public class BSPTree : MonoBehaviour {
 
         triangleNormals = new Vector3[triangleCount];
 
-        for (int i = 0; i < tris.Length; i += 3)
+        for (var i = 0; i < tris.Length; i += 3)
         {
-            Vector3 normal = Vector3.Cross((vertices[tris[i + 1]] - vertices[tris[i]]).normalized, (vertices[tris[i + 2]] - vertices[tris[i]]).normalized).normalized;
+            var normal =
+                Vector3.Cross((vertices[tris[i + 1]] - vertices[tris[i]]).normalized,
+                    (vertices[tris[i + 2]] - vertices[tris[i]]).normalized).normalized;
 
             triangleNormals[i / 3] = normal;
         }
@@ -57,32 +46,31 @@ public class BSPTree : MonoBehaviour {
             BuildTriangleTree();
     }
 
-    void Start()
+    private void Start()
     {
         if (drawMeshTreeOnStart)
             BuildTriangleTree();
     }
 
     /// <summary>
-    /// Returns the closest point on the mesh with respect to Vector3 point to
+    ///     Returns the closest point on the mesh with respect to Vector3 point to
     /// </summary>
     public Vector3 ClosestPointOn(Vector3 to, float radius)
     {
         to = transform.InverseTransformPoint(to);
 
-        List<int> triangles = new List<int>();
+        var triangles = new List<int>();
 
         FindClosestTriangles(tree, to, radius, triangles);
 
-        Vector3 closest = ClosestPointOnTriangle(triangles.ToArray(), to);
+        var closest = ClosestPointOnTriangle(triangles.ToArray(), to);
 
         return transform.TransformPoint(closest);
     }
 
-    void FindClosestTriangles(Node node, Vector3 to, float radius, List<int> triangles)
+    private void FindClosestTriangles(Node node, Vector3 to, float radius, List<int> triangles)
     {
         if (node.triangles == null)
-        {
             if (PointDistanceFromPlane(node.partitionPoint, node.partitionNormal, to) <= radius)
             {
                 FindClosestTriangles(node.positiveChild, to, radius, triangles);
@@ -96,31 +84,28 @@ public class BSPTree : MonoBehaviour {
             {
                 FindClosestTriangles(node.negativeChild, to, radius, triangles);
             }
-        }
         else
-        {
             triangles.AddRange(node.triangles);
-        }
     }
 
-    Vector3 ClosestPointOnTriangle(int[] triangles, Vector3 to)
+    private Vector3 ClosestPointOnTriangle(int[] triangles, Vector3 to)
     {
-        float shortestDistance = float.MaxValue;
+        var shortestDistance = float.MaxValue;
 
-        Vector3 shortestPoint = Vector3.zero;
+        var shortestPoint = Vector3.zero;
 
         // Iterate through all triangles
-        foreach (int triangle in triangles)
+        foreach (var triangle in triangles)
         {
-            Vector3 p1 = vertices[tris[triangle]];
-            Vector3 p2 = vertices[tris[triangle + 1]];
-            Vector3 p3 = vertices[tris[triangle + 2]];
+            var p1 = vertices[tris[triangle]];
+            var p2 = vertices[tris[triangle + 1]];
+            var p3 = vertices[tris[triangle + 2]];
 
             Vector3 nearest;
 
             ClosestPointOnTriangleToPoint(ref p1, ref p2, ref p3, ref to, out nearest);
 
-            float distance = (to - nearest).sqrMagnitude;
+            var distance = (to - nearest).sqrMagnitude;
 
             if (distance <= shortestDistance)
             {
@@ -132,47 +117,53 @@ public class BSPTree : MonoBehaviour {
         return shortestPoint;
     }
 
-    void BuildTriangleTree()
+    private void BuildTriangleTree()
     {
-        List<int> rootTriangles = new List<int>();
+        var rootTriangles = new List<int>();
 
-        for (int i = 0; i < tris.Length; i += 3)
-        {
+        for (var i = 0; i < tris.Length; i += 3)
             rootTriangles.Add(i);
-        }
 
         tree = new Node();
 
         RecursivePartition(rootTriangles, 0, tree);
     }
 
-    void RecursivePartition(List<int> triangles, int depth, Node parent)
+    private void RecursivePartition(List<int> triangles, int depth, Node parent)
     {
-        Vector3 partitionPoint = Vector3.zero;
+        var partitionPoint = Vector3.zero;
 
-        Vector3 maxExtents = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
-        Vector3 minExtents = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        var maxExtents = new Vector3(-float.MaxValue, -float.MaxValue, -float.MaxValue);
+        var minExtents = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
-        foreach (int triangle in triangles)
+        foreach (var triangle in triangles)
         {
             partitionPoint += vertices[tris[triangle]] + vertices[tris[triangle + 1]] + vertices[tris[triangle + 2]];
 
-            minExtents.x = Mathf.Min(minExtents.x, vertices[tris[triangle]].x, vertices[tris[triangle + 1]].x, vertices[tris[triangle + 2]].x);
-            minExtents.y = Mathf.Min(minExtents.y, vertices[tris[triangle]].y, vertices[tris[triangle + 1]].y, vertices[tris[triangle + 2]].y);
-            minExtents.z = Mathf.Min(minExtents.z, vertices[tris[triangle]].z, vertices[tris[triangle + 1]].z, vertices[tris[triangle + 2]].z);
+            minExtents.x = Mathf.Min(minExtents.x, vertices[tris[triangle]].x, vertices[tris[triangle + 1]].x,
+                vertices[tris[triangle + 2]].x);
+            minExtents.y = Mathf.Min(minExtents.y, vertices[tris[triangle]].y, vertices[tris[triangle + 1]].y,
+                vertices[tris[triangle + 2]].y);
+            minExtents.z = Mathf.Min(minExtents.z, vertices[tris[triangle]].z, vertices[tris[triangle + 1]].z,
+                vertices[tris[triangle + 2]].z);
 
-            maxExtents.x = Mathf.Max(maxExtents.x, vertices[tris[triangle]].x, vertices[tris[triangle + 1]].x, vertices[tris[triangle + 2]].x);
-            maxExtents.y = Mathf.Max(maxExtents.y, vertices[tris[triangle]].y, vertices[tris[triangle + 1]].y, vertices[tris[triangle + 2]].y);
-            maxExtents.z = Mathf.Max(maxExtents.z, vertices[tris[triangle]].z, vertices[tris[triangle + 1]].z, vertices[tris[triangle + 2]].z);
+            maxExtents.x = Mathf.Max(maxExtents.x, vertices[tris[triangle]].x, vertices[tris[triangle + 1]].x,
+                vertices[tris[triangle + 2]].x);
+            maxExtents.y = Mathf.Max(maxExtents.y, vertices[tris[triangle]].y, vertices[tris[triangle + 1]].y,
+                vertices[tris[triangle + 2]].y);
+            maxExtents.z = Mathf.Max(maxExtents.z, vertices[tris[triangle]].z, vertices[tris[triangle + 1]].z,
+                vertices[tris[triangle + 2]].z);
         }
 
         // Centroid of all vertices
         partitionPoint /= vertexCount;
 
         // Better idea? Center of bounding box
-        partitionPoint = minExtents + Math3d.SetVectorLength((maxExtents - minExtents), (maxExtents - minExtents).magnitude * 0.5f);
+        partitionPoint = minExtents +
+                         Math3d.SetVectorLength(maxExtents - minExtents, (maxExtents - minExtents).magnitude * 0.5f);
 
-        Vector3 extentsMagnitude = new Vector3(Mathf.Abs(maxExtents.x - minExtents.x), Mathf.Abs(maxExtents.y - minExtents.y), Mathf.Abs(maxExtents.z - minExtents.z));
+        var extentsMagnitude = new Vector3(Mathf.Abs(maxExtents.x - minExtents.x),
+            Mathf.Abs(maxExtents.y - minExtents.y), Mathf.Abs(maxExtents.z - minExtents.z));
 
         Vector3 partitionNormal;
 
@@ -191,10 +182,10 @@ public class BSPTree : MonoBehaviour {
         parent.partitionNormal = partitionNormal;
         parent.partitionPoint = partitionPoint;
 
-        Node posNode = new Node();
+        var posNode = new Node();
         parent.positiveChild = posNode;
 
-        Node negNode = new Node();
+        var negNode = new Node();
         parent.negativeChild = negNode;
 
         if (positiveTriangles.Count < triangles.Count && positiveTriangles.Count > 3)
@@ -220,23 +211,23 @@ public class BSPTree : MonoBehaviour {
             if (drawMeshTreeOnStart)
                 DrawTriangleSet(negNode.triangles, DebugDraw.RandomColor());
         }
-
     }
 
     /// <summary>
-    /// Splits a a set of input triangles by a partition plane into positive and negative sets, with triangles
-    /// that are intersected by the partition plane being placed in both sets
+    ///     Splits a a set of input triangles by a partition plane into positive and negative sets, with triangles
+    ///     that are intersected by the partition plane being placed in both sets
     /// </summary>
-    void Split(List<int> triangles, Vector3 partitionPoint, Vector3 partitionNormal, out List<int> positiveTriangles, out List<int> negativeTriangles)
+    private void Split(List<int> triangles, Vector3 partitionPoint, Vector3 partitionNormal,
+        out List<int> positiveTriangles, out List<int> negativeTriangles)
     {
         positiveTriangles = new List<int>();
         negativeTriangles = new List<int>();
 
-        foreach (int triangle in triangles)
+        foreach (var triangle in triangles)
         {
-            bool firstPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle]]);
-            bool secondPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle + 1]]);
-            bool thirdPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle + 2]]);
+            var firstPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle]]);
+            var secondPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle + 1]]);
+            var thirdPointAbove = PointAbovePlane(partitionPoint, partitionNormal, vertices[tris[triangle + 2]]);
 
             if (firstPointAbove && secondPointAbove && thirdPointAbove)
             {
@@ -254,59 +245,55 @@ public class BSPTree : MonoBehaviour {
         }
     }
 
-    bool PointAbovePlane(Vector3 planeOrigin, Vector3 planeNormal, Vector3 point)
+    private bool PointAbovePlane(Vector3 planeOrigin, Vector3 planeNormal, Vector3 point)
     {
         return Vector3.Dot(point - planeOrigin, planeNormal) >= 0;
     }
 
-    float PointDistanceFromPlane(Vector3 planeOrigin, Vector3 planeNormal, Vector3 point)
+    private float PointDistanceFromPlane(Vector3 planeOrigin, Vector3 planeNormal, Vector3 point)
     {
-        return Mathf.Abs(Vector3.Dot((point - planeOrigin), planeNormal));
+        return Mathf.Abs(Vector3.Dot(point - planeOrigin, planeNormal));
     }
 
     /// <summary>
-    /// Determines the closest point between a point and a triangle.
-    /// Borrowed from RPGMesh class of the RPGController package for Unity, by fholm
-    /// The code in this method is copyrighted by the SlimDX Group under the MIT license:
-    /// 
-    /// Copyright (c) 2007-2010 SlimDX Group
-    /// 
-    /// Permission is hereby granted, free of charge, to any person obtaining a copy
-    /// of this software and associated documentation files (the "Software"), to deal
-    /// in the Software without restriction, including without limitation the rights
-    /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    /// copies of the Software, and to permit persons to whom the Software is
-    /// furnished to do so, subject to the following conditions:
-    /// 
-    /// The above copyright notice and this permission notice shall be included in
-    /// all copies or substantial portions of the Software.
-    /// 
-    /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    /// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    /// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    /// THE SOFTWARE.
-    /// 
+    ///     Determines the closest point between a point and a triangle.
+    ///     Borrowed from RPGMesh class of the RPGController package for Unity, by fholm
+    ///     The code in this method is copyrighted by the SlimDX Group under the MIT license:
+    ///     Copyright (c) 2007-2010 SlimDX Group
+    ///     Permission is hereby granted, free of charge, to any person obtaining a copy
+    ///     of this software and associated documentation files (the "Software"), to deal
+    ///     in the Software without restriction, including without limitation the rights
+    ///     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    ///     copies of the Software, and to permit persons to whom the Software is
+    ///     furnished to do so, subject to the following conditions:
+    ///     The above copyright notice and this permission notice shall be included in
+    ///     all copies or substantial portions of the Software.
+    ///     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    ///     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    ///     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    ///     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    ///     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    ///     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    ///     THE SOFTWARE.
     /// </summary>
     /// <param name="point">The point to test.</param>
     /// <param name="vertex1">The first vertex to test.</param>
     /// <param name="vertex2">The second vertex to test.</param>
     /// <param name="vertex3">The third vertex to test.</param>
     /// <param name="result">When the method completes, contains the closest point between the two objects.</param>
-    void ClosestPointOnTriangleToPoint(ref Vector3 vertex1, ref Vector3 vertex2, ref Vector3 vertex3, ref Vector3 point, out Vector3 result)
+    private void ClosestPointOnTriangleToPoint(ref Vector3 vertex1, ref Vector3 vertex2, ref Vector3 vertex3,
+        ref Vector3 point, out Vector3 result)
     {
         //Source: Real-Time Collision Detection by Christer Ericson
         //Reference: Page 136
 
         //Check if P in vertex region outside A
-        Vector3 ab = vertex2 - vertex1;
-        Vector3 ac = vertex3 - vertex1;
-        Vector3 ap = point - vertex1;
+        var ab = vertex2 - vertex1;
+        var ac = vertex3 - vertex1;
+        var ap = point - vertex1;
 
-        float d1 = Vector3.Dot(ab, ap);
-        float d2 = Vector3.Dot(ac, ap);
+        var d1 = Vector3.Dot(ab, ap);
+        var d2 = Vector3.Dot(ac, ap);
         if (d1 <= 0.0f && d2 <= 0.0f)
         {
             result = vertex1; //Barycentric coordinates (1,0,0)
@@ -314,9 +301,9 @@ public class BSPTree : MonoBehaviour {
         }
 
         //Check if P in vertex region outside B
-        Vector3 bp = point - vertex2;
-        float d3 = Vector3.Dot(ab, bp);
-        float d4 = Vector3.Dot(ac, bp);
+        var bp = point - vertex2;
+        var d3 = Vector3.Dot(ab, bp);
+        var d4 = Vector3.Dot(ac, bp);
         if (d3 >= 0.0f && d4 <= d3)
         {
             result = vertex2; // barycentric coordinates (0,1,0)
@@ -324,18 +311,18 @@ public class BSPTree : MonoBehaviour {
         }
 
         //Check if P in edge region of AB, if so return projection of P onto AB
-        float vc = d1 * d4 - d3 * d2;
+        var vc = d1 * d4 - d3 * d2;
         if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f)
         {
-            float v = d1 / (d1 - d3);
+            var v = d1 / (d1 - d3);
             result = vertex1 + v * ab; //Barycentric coordinates (1-v,v,0)
             return;
         }
 
         //Check if P in vertex region outside C
-        Vector3 cp = point - vertex3;
-        float d5 = Vector3.Dot(ab, cp);
-        float d6 = Vector3.Dot(ac, cp);
+        var cp = point - vertex3;
+        var d5 = Vector3.Dot(ab, cp);
+        var d6 = Vector3.Dot(ac, cp);
         if (d6 >= 0.0f && d5 <= d6)
         {
             result = vertex3; //Barycentric coordinates (0,0,1)
@@ -343,35 +330,45 @@ public class BSPTree : MonoBehaviour {
         }
 
         //Check if P in edge region of AC, if so return projection of P onto AC
-        float vb = d5 * d2 - d1 * d6;
+        var vb = d5 * d2 - d1 * d6;
         if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f)
         {
-            float w = d2 / (d2 - d6);
+            var w = d2 / (d2 - d6);
             result = vertex1 + w * ac; //Barycentric coordinates (1-w,0,w)
             return;
         }
 
         //Check if P in edge region of BC, if so return projection of P onto BC
-        float va = d3 * d6 - d5 * d4;
-        if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f)
+        var va = d3 * d6 - d5 * d4;
+        if (va <= 0.0f && d4 - d3 >= 0.0f && d5 - d6 >= 0.0f)
         {
-            float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+            var w = (d4 - d3) / (d4 - d3 + (d5 - d6));
             result = vertex2 + w * (vertex3 - vertex2); //Barycentric coordinates (0,1-w,w)
             return;
         }
 
         //P inside face region. Compute Q through its barycentric coordinates (u,v,w)
-        float denom = 1.0f / (va + vb + vc);
-        float v2 = vb * denom;
-        float w2 = vc * denom;
+        var denom = 1.0f / (va + vb + vc);
+        var v2 = vb * denom;
+        var w2 = vc * denom;
         result = vertex1 + ab * v2 + ac * w2; //= u*vertex1 + v*vertex2 + w*vertex3, u = va * denom = 1.0f - v - w
     }
 
-    void DrawTriangleSet(int[] triangles, Color color)
+    private void DrawTriangleSet(int[] triangles, Color color)
     {
-        foreach (int triangle in triangles)
-        {
-            DebugDraw.DrawTriangle(vertices[tris[triangle]], vertices[tris[triangle + 1]], vertices[tris[triangle + 2]], color, transform);
-        }
+        foreach (var triangle in triangles)
+            DebugDraw.DrawTriangle(vertices[tris[triangle]], vertices[tris[triangle + 1]], vertices[tris[triangle + 2]],
+                color, transform);
+    }
+
+    public class Node
+    {
+        public Node negativeChild;
+        public Vector3 partitionNormal;
+        public Vector3 partitionPoint;
+
+        public Node positiveChild;
+
+        public int[] triangles;
     }
 }

@@ -1,37 +1,28 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public static class SuperCollider {
-
+public static class SuperCollider
+{
     public static Vector3 ClosestPointOnSurface(Collider collider, Vector3 to, float radius)
     {
         if (collider is BoxCollider)
+            return ClosestPointOnSurface((BoxCollider) collider, to);
+        if (collider is SphereCollider)
+            return ClosestPointOnSurface((SphereCollider) collider, to);
+        if (collider is CapsuleCollider)
         {
-            return SuperCollider.ClosestPointOnSurface((BoxCollider)collider, to);
+            return ClosestPointOnSurface((CapsuleCollider) collider, to);
         }
-        else if (collider is SphereCollider)
+        if (collider is MeshCollider)
         {
-            return SuperCollider.ClosestPointOnSurface((SphereCollider)collider, to);
-        }
-        else if (collider is CapsuleCollider)
-        {
-            return SuperCollider.ClosestPointOnSurface((CapsuleCollider)collider, to);
-        }
-        else if (collider is MeshCollider)
-        {
-            BSPTree bsp = collider.GetComponent<BSPTree>();
+            var bsp = collider.GetComponent<BSPTree>();
 
             if (bsp != null)
-            {
                 return bsp.ClosestPointOn(to, radius);
-            }
 
-            BruteForceMesh bfm = collider.GetComponent<BruteForceMesh>();
+            var bfm = collider.GetComponent<BruteForceMesh>();
 
             if (bfm != null)
-            {
                 return bfm.ClosestPointOn(to);
-            }
         }
 
         return Vector3.zero;
@@ -66,10 +57,10 @@ public static class SuperCollider {
 
         // Clamp the points to the collider's extents
         var localNorm = new Vector3(
-                Mathf.Clamp(local.x, -halfSize.x, halfSize.x),
-                Mathf.Clamp(local.y, -halfSize.y, halfSize.y),
-                Mathf.Clamp(local.z, -halfSize.z, halfSize.z)
-            );
+            Mathf.Clamp(local.x, -halfSize.x, halfSize.x),
+            Mathf.Clamp(local.y, -halfSize.y, halfSize.y),
+            Mathf.Clamp(local.z, -halfSize.z, halfSize.z)
+        );
 
         //Calculate distances from each edge
         var dx = Mathf.Min(Mathf.Abs(halfSize.x - localNorm.x), Mathf.Abs(-halfSize.x - localNorm.x));
@@ -78,17 +69,11 @@ public static class SuperCollider {
 
         // Select a face to project on
         if (dx < dy && dx < dz)
-        {
             localNorm.x = Mathf.Sign(localNorm.x) * halfSize.x;
-        }
         else if (dy < dx && dy < dz)
-        {
             localNorm.y = Mathf.Sign(localNorm.y) * halfSize.y;
-        }
         else if (dz < dx && dz < dy)
-        {
             localNorm.z = Mathf.Sign(localNorm.z) * halfSize.z;
-        }
 
         // Now we undo our transformations
         localNorm += collider.center;
@@ -100,20 +85,25 @@ public static class SuperCollider {
     // Courtesy of Moodie
     public static Vector3 ClosestPointOnSurface(CapsuleCollider collider, Vector3 to)
     {
-        Transform ct = collider.transform; // Transform of the collider
+        var ct = collider.transform; // Transform of the collider
 
-        float lineLength = collider.height - collider.radius * 2; // The length of the line connecting the center of both sphere
-        Vector3 dir = Vector3.up;
+        var lineLength = collider.height - collider.radius * 2;
+            // The length of the line connecting the center of both sphere
+        var dir = Vector3.up;
 
-        Vector3 upperSphere = dir * lineLength * 0.5f + collider.center; // The position of the radius of the upper sphere in local coordinates
-        Vector3 lowerSphere = -dir * lineLength * 0.5f + collider.center; // The position of the radius of the lower sphere in local coordinates
+        var upperSphere = dir * lineLength * 0.5f + collider.center;
+            // The position of the radius of the upper sphere in local coordinates
+        var lowerSphere = -dir * lineLength * 0.5f + collider.center;
+            // The position of the radius of the lower sphere in local coordinates
 
-        Vector3 local = ct.InverseTransformPoint(to); // The position of the controller in local coordinates
+        var local = ct.InverseTransformPoint(to); // The position of the controller in local coordinates
 
-        Vector3 p = Vector3.zero; // Contact point
-        Vector3 pt = Vector3.zero; // The point we need to use to get a direction vector with the controller to calculate contact point
+        var p = Vector3.zero; // Contact point
+        var pt = Vector3.zero;
+            // The point we need to use to get a direction vector with the controller to calculate contact point
 
-        if (local.y < lineLength * 0.5f && local.y > -lineLength * 0.5f) // Controller is contacting with cylinder, not spheres
+        if (local.y < lineLength * 0.5f && local.y > -lineLength * 0.5f)
+            // Controller is contacting with cylinder, not spheres
             pt = dir * local.y + collider.center;
         else if (local.y > lineLength * 0.5f) // Controller is contacting with the upper sphere 
             pt = upperSphere;
@@ -125,6 +115,5 @@ public static class SuperCollider {
         p.Normalize();
         p = p * collider.radius + pt;
         return ct.TransformPoint(p);
-
     }
 }

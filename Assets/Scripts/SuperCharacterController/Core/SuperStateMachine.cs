@@ -1,31 +1,24 @@
 ﻿// With a little help from UnityGems
 
-using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using UnityEngine;
 
-public class SuperStateMachine : MonoBehaviour {
+public class SuperStateMachine : MonoBehaviour
+{
+    private readonly Dictionary<Enum, Dictionary<string, Delegate>> _cache =
+        new Dictionary<Enum, Dictionary<string, Delegate>>();
 
-    protected float timeEnteredState;
-
-    public class State
-    {
-        public Action DoSuperUpdate = DoNothing;
-        public Action enterState = DoNothing;
-        public Action exitState = DoNothing;
-
-        public Enum currentState;
-    }
+    [HideInInspector] public Enum lastState;
 
     public State state = new State();
 
+    protected float timeEnteredState;
+
     public Enum currentState
     {
-        get
-        {
-            return state.currentState;
-        }
+        get { return state.currentState; }
         set
         {
             if (state.currentState == value)
@@ -37,21 +30,16 @@ public class SuperStateMachine : MonoBehaviour {
         }
     }
 
-    [HideInInspector]
-    public Enum lastState;
-
-    void ChangingState()
+    private void ChangingState()
     {
         lastState = state.currentState;
         timeEnteredState = Time.time;
     }
 
-    void ConfigureCurrentState()
+    private void ConfigureCurrentState()
     {
         if (state.exitState != null)
-        {
             state.exitState();
-        }
 
         //Now we need to configure all of the methods
         state.DoSuperUpdate = ConfigureDelegate<Action>("SuperUpdate", DoNothing);
@@ -59,42 +47,32 @@ public class SuperStateMachine : MonoBehaviour {
         state.exitState = ConfigureDelegate<Action>("ExitState", DoNothing);
 
         if (state.enterState != null)
-        {
             state.enterState();
-        }
     }
 
-    Dictionary<Enum, Dictionary<string, Delegate>> _cache = new Dictionary<Enum, Dictionary<string, Delegate>>();
-
-    T ConfigureDelegate<T>(string methodRoot, T Default) where T : class
+    private T ConfigureDelegate<T>(string methodRoot, T Default) where T : class
     {
-
         Dictionary<string, Delegate> lookup;
         if (!_cache.TryGetValue(state.currentState, out lookup))
-        {
             _cache[state.currentState] = lookup = new Dictionary<string, Delegate>();
-        }
         Delegate returnValue;
         if (!lookup.TryGetValue(methodRoot, out returnValue))
         {
-            var mtd = GetType().GetMethod(state.currentState.ToString() + "_" + methodRoot, System.Reflection.BindingFlags.Instance
-                | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.InvokeMethod);
+            var mtd = GetType().GetMethod(state.currentState + "_" + methodRoot, BindingFlags.Instance
+                                                                                 | BindingFlags.Public |
+                                                                                 BindingFlags.NonPublic |
+                                                                                 BindingFlags.InvokeMethod);
 
             if (mtd != null)
-            {
                 returnValue = Delegate.CreateDelegate(typeof(T), this, mtd);
-            }
             else
-            {
                 returnValue = Default as Delegate;
-            }
             lookup[methodRoot] = returnValue;
         }
         return returnValue as T;
-
     }
 
-    void SuperUpdate()
+    private void SuperUpdate()
     {
         EarlyGlobalSuperUpdate();
 
@@ -103,9 +81,23 @@ public class SuperStateMachine : MonoBehaviour {
         LateGlobalSuperUpdate();
     }
 
-    protected virtual void EarlyGlobalSuperUpdate() { }
+    protected virtual void EarlyGlobalSuperUpdate()
+    {
+    }
 
-    protected virtual void LateGlobalSuperUpdate() { }
+    protected virtual void LateGlobalSuperUpdate()
+    {
+    }
 
-    static void DoNothing() { }
+    private static void DoNothing()
+    {
+    }
+
+    public class State
+    {
+        public Enum currentState;
+        public Action DoSuperUpdate = DoNothing;
+        public Action enterState = DoNothing;
+        public Action exitState = DoNothing;
+    }
 }

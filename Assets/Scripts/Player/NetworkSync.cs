@@ -1,35 +1,31 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace DemoGame.Player
 {
     /// <summary>
-    /// For local player, dispatch received position to CharacterNetworkInput
-    /// For distant player, do interpolation between received states
+    ///     For local player, dispatch received position to CharacterNetworkInput
+    ///     For distant player, do interpolation between received states
     /// </summary>
     [NetworkSettings(channel = 1, sendInterval = 0.33f)]
     public class NetworkSync : NetworkBehaviour
     {
+        private NetworkInterpolation networkInterpolation; //The interpolation component
 
-        private NetworkInterpolation networkInterpolation;     //The interpolation component
+        [SyncVar] private State serverLastState; //SERVER: Store last state
 
-        [SyncVar]
-        private State serverLastState;                 //SERVER: Store last state
-
-        void Start()
+        private void Start()
         {
             networkInterpolation = GetComponent<NetworkInterpolation>();
         }
 
         /// <summary>
-        /// Server: Called when a state from client was received and update finished
+        ///     Server: Called when a state from client was received and update finished
         /// </summary>
         /// <param name="clientInputState"></param>
-        void ServerStateReceived(int clientInputState)
+        private void ServerStateReceived(int clientInputState)
         {
-            State state = new State();
+            var state = new State();
             state.Frame = clientInputState;
             state.Position = transform.position;
             state.Rotation = transform.rotation;
@@ -39,13 +35,11 @@ namespace DemoGame.Player
 
             //If server and client is local, bypass the sync and set state as ACKed
             if (isServer && isLocalPlayer)
-            {
                 SendMessage("ServerState", state, SendMessageOptions.DontRequireReceiver);
-            }
         }
 
         /// <summary>
-        /// Server: Serialize the state over network
+        ///     Server: Serialize the state over network
         /// </summary>
         /// <param name="writer"></param>
         /// <param name="initialState"></param>
@@ -60,13 +54,13 @@ namespace DemoGame.Player
         }
 
         /// <summary>
-        /// All Clients: Deserialize the state from network
+        ///     All Clients: Deserialize the state from network
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="initialState"></param>
         public override void OnDeserialize(NetworkReader reader, bool initialState)
         {
-            State state = new State();
+            var state = new State();
 
             state.Frame = reader.ReadInt32();
             state.Position = reader.ReadVector3();

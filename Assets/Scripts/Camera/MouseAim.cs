@@ -1,22 +1,20 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 namespace DemoGame.Camera
 {
     /// <summary>
-    /// Simple script for mouse aim around a specific target
+    ///     Simple script for mouse aim around a specific target
     /// </summary>
     /// <remarks>
-    /// In our case, the target is a little above characters's shoulder
+    ///     In our case, the target is a little above characters's shoulder
     /// </remarks>
-
     public class MouseAim : MonoBehaviour
     {
-
-        public GameObject Target;
+        private UnityEngine.Camera m_Camera;
 
         [SerializeField] private MouseLook m_MouseLook;
-        private UnityEngine.Camera m_Camera;
+
+        public GameObject Target;
 
         public void RunUpdate(float delta)
         {
@@ -25,18 +23,18 @@ namespace DemoGame.Camera
 
         public void SetTarget(GameObject target)
         {
-            this.Target = target;
+            Target = target;
 
             if (target == null)
             {
-                this.enabled = false;
+                enabled = false;
             }
             else
             {
-                this.transform.parent = target.transform.parent;
-                this.transform.position = target.transform.position;
-                this.transform.rotation = target.transform.rotation;
-                this.enabled = true;
+                transform.parent = target.transform.parent;
+                transform.position = target.transform.position;
+                transform.rotation = target.transform.rotation;
+                enabled = true;
 
                 m_Camera = UnityEngine.Camera.main;
                 m_MouseLook.Init(target.transform.parent, m_Camera.transform);

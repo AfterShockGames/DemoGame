@@ -1,43 +1,42 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using DemoGame.Player.Input;
+using UnityEngine;
 
 namespace DemoGame.Player
 {
     /// <summary>
-    /// Manages caracter movement according to CharacterInput values
+    ///     Manages caracter movement according to CharacterInput values
     /// </summary>
     public class Movement : MonoBehaviour
     {
-
-        [SerializeField]
-        public float Speed = 6.0F;
-        [SerializeField]
-        public float RunSpeed = 8.0F;
-        [SerializeField]
-        public float JumpHeight = 8.0F;
-        [SerializeField]
-        public float Gravity = 20.0F;
-        [SerializeField]
-        public float GravityAccel = 9f;
-
         private FixedController controller;
-        private Input.InputManager input;
-        private Vector3 moveDirection = Vector3.zero;
+
+        [SerializeField] public float Gravity = 20.0F;
+
+        [SerializeField] public float GravityAccel = 9f;
+
+        private InputManager input;
+
+        [SerializeField] public float JumpHeight = 8.0F;
+
+        private int lastGround; //Represent last tick the controller touched ground
         private Vector3 lookDirection;
+        private Vector3 moveDirection = Vector3.zero;
 
-        private int lastGround;     //Represent last tick the controller touched ground
+        [SerializeField] public float RunSpeed = 8.0F;
 
-        void Awake()
+        [SerializeField] public float Speed = 6.0F;
+
+        private void Awake()
         {
-            input = GetComponent<Input.InputManager>();
+            input = GetComponent<InputManager>();
             controller = GetComponent<FixedController>();
             lookDirection = transform.forward;
         }
 
         /// <summary>
-        /// Run update like classic unity's Update
-        /// We use an other method here because the calling must be controlled by CharacterNetwork
-        /// We can't use standard Update method because Unity update order is non-deterministic
+        ///     Run update like classic unity's Update
+        ///     We use an other method here because the calling must be controlled by CharacterNetwork
+        ///     We can't use standard Update method because Unity update order is non-deterministic
         /// </summary>
         /// <param name="delta"></param>
         public void RunUpdate(float delta)
@@ -46,9 +45,9 @@ namespace DemoGame.Player
         }
 
         /// <summary>
-        /// Called by the controller when wanting to update custom code data
+        ///     Called by the controller when wanting to update custom code data
         /// </summary>
-        void SuperUpdate()
+        private void SuperUpdate()
         {
             //Allways look forward
             lookDirection = transform.forward;
@@ -56,18 +55,14 @@ namespace DemoGame.Player
             //Adjust somes values
             lastGround++;
             if (AcquiringGround())
-            {
                 lastGround = 0;
-            }
 
             //Calculate movement from keys
-            float actualSpeed = Speed;
+            var actualSpeed = Speed;
             if (input.CurrentInput.Run)
-            {
                 actualSpeed = RunSpeed;
-            }
-            Vector3 movement = Vector3.MoveTowards(moveDirection, LocalMovement() * actualSpeed, Mathf.Infinity);
-            
+            var movement = Vector3.MoveTowards(moveDirection, LocalMovement() * actualSpeed, Mathf.Infinity);
+
             if (input.CurrentInput.Jump && AcquiringGround())
             {
                 //Add jump velocity if jumping
@@ -87,34 +82,28 @@ namespace DemoGame.Player
                 controller.EnableClamping();
             }
 
-            if(input.CurrentInput.Fire)
-            {
+            if (input.CurrentInput.Fire)
                 Debug.Log("firing");
-            }
 
             moveDirection = movement;
             controller.debugMove = moveDirection;
         }
 
         /// <summary>
-        /// Constructs a vector representing our movement local to our lookDirection, which is
-        /// controlled by the camera
+        ///     Constructs a vector representing our movement local to our lookDirection, which is
+        ///     controlled by the camera
         /// </summary>
         private Vector3 LocalMovement()
         {
-            Vector3 right = Vector3.Cross(controller.up, lookDirection);
+            var right = Vector3.Cross(controller.up, lookDirection);
 
-            Vector3 local = Vector3.zero;
+            var local = Vector3.zero;
 
             if (input.CurrentInput.HorizontalInput != 0)
-            {
                 local += right * input.CurrentInput.HorizontalInput;
-            }
 
             if (input.CurrentInput.VerticalInput != 0)
-            {
                 local += lookDirection * input.CurrentInput.VerticalInput;
-            }
 
             return local.normalized;
         }
@@ -134,6 +123,5 @@ namespace DemoGame.Player
         {
             return Mathf.Sqrt(0.5f * JumpHeight * GravityAccel);
         }
-
     }
 }

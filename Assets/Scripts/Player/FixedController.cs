@@ -1,21 +1,16 @@
-﻿using UnityEngine;
-using System.Collections;
-
-namespace DemoGame.Player
+﻿namespace DemoGame.Player
 {
     public class FixedController : SuperCharacterController
     {
-
-        void Update()
+        private void Update()
         {
             //Disable SuperCharacterController Update
         }
 
         public void DoUpdate(float delta)
         {
-            base.deltaTime = delta;
-            base.SingleUpdate();
+            deltaTime = delta;
+            SingleUpdate();
         }
-
     }
 }

@@ -1,32 +1,29 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using DemoGame.Player;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace DemoGame.Entity.Projectile
 {
-
     public delegate void WeaponProjectileCallback(ProjectileBase projectile);
 
     public class ProjectileBase : MonoBehaviour
     {
-        internal int _frameLifetime;
-        internal double _spawnFrame;
-        internal double _killFrame;
+        internal bool _canImpact = true;
         internal double _currentFrame;
-
-        internal Vector3 _origin;
-        internal Vector3 _velocity;
+        internal float _explosionRadius = 5f;
+        internal int _frameLifetime;
 
         internal byte _healthImpact = 100;
+
+        internal HashSet<GameObject> _ignoreGameObjects = new HashSet<GameObject>();
         internal float _impactForce = 25F;
-        internal float _explosionRadius = 5f;
 
         internal string _impactParticle;
         internal string _impactParticleResource;
+        internal double _killFrame;
 
-        internal bool _canImpact = true;
-
-        internal HashSet<GameObject> _ignoreGameObjects = new HashSet<GameObject>();
+        internal Vector3 _origin;
+        internal double _spawnFrame;
+        internal Vector3 _velocity;
 
         public event WeaponProjectileCallback OnImpact;
 
@@ -118,7 +115,7 @@ namespace DemoGame.Entity.Projectile
 
         public ProjectileBase IgnoreGameObject(GameObject ignoreGameObject)
         {
-            this._ignoreGameObjects.Add(ignoreGameObject);
+            _ignoreGameObjects.Add(ignoreGameObject);
             return this;
         }
 
@@ -138,8 +135,7 @@ namespace DemoGame.Entity.Projectile
         internal void OnHitIndirect(List<Collider> hits, Vector3 hitPoint)
         {
             if (_canImpact)
-            {
-                for (int i = 0; i < hits.Count; i++)
+                for (var i = 0; i < hits.Count; i++)
                 {
                     var hit = hits[i];
 
@@ -148,7 +144,7 @@ namespace DemoGame.Entity.Projectile
                     if (UnityEngine.Network.isServer)
                     {
                         // apply indirect damage
-                        var healthImpact = Mathf.Max(0, (1f - (distance / _explosionRadius)) * _healthImpact);
+                        var healthImpact = Mathf.Max(0, (1f - distance / _explosionRadius) * _healthImpact);
                         //hit.gameObject.transform.root.GetComponent<Controller>().ApplyDamage((byte)healthImpact);
                     }
 
@@ -158,31 +154,30 @@ namespace DemoGame.Entity.Projectile
                     //hit.gameObject.transform.root.GetComponent<Motor>()
                     //    .AddImpact(hit.gameObject.transform.position - hitPoint, _impactForce * multiplier);
                 }
-            }
         }
 
 
         public Vector3 GetPositionAtFrame(double frame)
         {
-            float totalDelta = (float)(frame - this._spawnFrame);
+            var totalDelta = (float) (frame - _spawnFrame);
             return
-                this._origin +
-                (this._velocity * UnityEngine.Time.fixedDeltaTime * totalDelta);
+                _origin +
+                _velocity * Time.fixedDeltaTime * totalDelta;
         }
 
-        void FixedUpdate()
+        private void FixedUpdate()
         {
             if (_canImpact)
             {
-                double serverFrame = UnityEngine.Network.time;
-                if (serverFrame > this._killFrame)
+                var serverFrame = UnityEngine.Network.time;
+                if (serverFrame > _killFrame)
                     KillFrameReached();
 
-                for (; this._currentFrame < serverFrame; this._currentFrame++)
-                    this.ResolveCollisions(this._currentFrame, UnityEngine.Time.fixedDeltaTime);
+                for (; _currentFrame < serverFrame; _currentFrame++)
+                    ResolveCollisions(_currentFrame, Time.fixedDeltaTime);
 
-                this.transform.position =
-                    this.GetPositionAtFrame(serverFrame);
+                transform.position =
+                    GetPositionAtFrame(serverFrame);
             }
         }
 

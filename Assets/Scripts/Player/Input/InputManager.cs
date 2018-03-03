@@ -1,32 +1,30 @@
-﻿using UnityEngine;
+﻿using DemoGame.Camera;
+using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
-using DemoGame.Camera;
 using UnityInput = UnityEngine.Input;
 
 namespace DemoGame.Player.Input
 {
     /// <summary>
-    /// Fetches local input and store it
+    ///     Fetches local input and store it
     /// </summary>
     /// <remarks>
-    /// Used as a proxy for Unity's Input class 
-    /// Sometimes we need to fake some inputs (when replaying old states for example)
+    ///     Used as a proxy for Unity's Input class
+    ///     Sometimes we need to fake some inputs (when replaying old states for example)
     /// </remarks>
     public class InputManager : NetworkBehaviour
     {
-
         private AimPoint cameraAim;
 
         public State CurrentInput;
 
-        void Awake()
+        private void Awake()
         {
             cameraAim = UnityEngine.Camera.main.GetComponent<AimPoint>();
         }
 
         /// <summary>
-        /// Ask to update input from Unity's Input
+        ///     Ask to update input from Unity's Input
         /// </summary>
         public void Parse(int inputState)
         {
