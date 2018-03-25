@@ -1,5 +1,6 @@
 ﻿#region
 
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace DemoGame.Entity.Projectile
             OnHitDirect(new RaycastHit(), hitPoint);
 
             // needs referal
-            OnHitIndirect(Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList(), hitPoint);
+            OnHitIndirect(UnityEngine.Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList(), hitPoint);
 
             Destroy(gameObject);
 
@@ -39,7 +40,7 @@ namespace DemoGame.Entity.Projectile
             var distance = (Velocity * frameDeltaTime).magnitude;
 
             var ray = new Ray(origin, Velocity.normalized);
-            var hits = Physics.RaycastAll(ray).ToList();
+            var hits = UnityEngine.Physics.RaycastAll(ray).ToList();
 
             var hitPoint = origin;
 
@@ -57,7 +58,7 @@ namespace DemoGame.Entity.Projectile
             {
                 RaycastHit hit;
 
-                if (Physics.Raycast(ray, out hit, distance, 1 << LayerMask.NameToLayer("world")))
+                if (UnityEngine.Physics.Raycast(ray, out hit, distance, 1 << LayerMask.NameToLayer("world")))
                 {
                     hitPoint = hit.point;
                     // hit the world
@@ -67,7 +68,7 @@ namespace DemoGame.Entity.Projectile
             }
             else
             {
-                var indirectHits = Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList();
+                var indirectHits = UnityEngine.Physics.OverlapSphere(hitPoint, ExplosionRadius).ToList();
                 OnHitIndirect(indirectHits, hitPoint);
             }
 

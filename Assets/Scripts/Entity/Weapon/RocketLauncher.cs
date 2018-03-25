@@ -1,5 +1,6 @@
 ﻿#region
 
+using System.Collections.Generic;
 using DemoGame.Entity.Projectile;
 using UnityEngine;
 
@@ -21,9 +22,14 @@ namespace DemoGame.Entity.Weapon
                 var forward = transform.forward;
                 var originPosition = FireOrigin.transform.position;
 
-                var instance = Instantiate(Projectile, originPosition, Quaternion.identity);
+                // Calculate forward vector of aiming camera 
+
+                var projectileRotation = Quaternion.LookRotation(forward);
+
+                var instance = Instantiate(Projectile, originPosition, projectileRotation);
 
                 var projectileRocketlauncher = instance.GetComponent<ProjectileRocketlauncher>();
+
                 projectileRocketlauncher
                     .SetCurrentFrame(UnityEngine.Network.time)
                     .SetFrameLifetime(ProjectileLifetime)
@@ -33,6 +39,7 @@ namespace DemoGame.Entity.Weapon
                     .SetHealthImpact(HealthImpact)
                     .SetOrigin(originPosition)
                     .SetImpactForce(ImpactForce)
+                    .SetIgnoreGameObjects(new HashSet<GameObject>() {gameObject, FireOrigin.gameObject})
                     .SetVelocity(forward * FireVelocity);
 
                 LastShot = Time.time;
