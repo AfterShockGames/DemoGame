@@ -1,6 +1,7 @@
 ﻿#region
 
 using DemoGame.Entity.Weapon;
+using DemoGame.Interfaces;
 using DemoGame.Player.Input;
 using UnityEngine;
 
@@ -94,7 +95,7 @@ namespace DemoGame.Player
             if (input.CurrentInput.Fire && !IsReplayMovement)
             {
                 Debug.Log("firing");
-                var weapon = GetComponent<WeaponBase>();
+                var weapon = GetComponent<IWeapon>();
 
                 if (weapon.CanFire())
                     weapon.Fire();

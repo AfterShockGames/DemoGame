@@ -1,4 +1,4 @@
-﻿namespace DemoGame.Entity.Weapon
+﻿namespace DemoGame.Entity.Weapon.bak
 {
     public abstract class WeaponProjectileExplosion : WeaponProjectile
     {

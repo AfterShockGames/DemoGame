@@ -54,7 +54,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 4242507946789322}
-  - component: {fileID: 114201678297263926}
+  - component: {fileID: 114681330625179418}
   m_Layer: 0
   m_Name: Rocket
   m_TagString: Untagged
@@ -228,7 +228,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &114201678297263926
+--- !u!114 &114681330625179418
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -236,9 +236,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 1624454853123306}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 706a4a2683a5f774b8a26f494225a513, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ba89d82e05a7f64fb781857508626a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _canImpact: 1
+  _currentFrame: 0
+  _spawnFrame: 0
+  _particle: 
+  _particleResource: 
+  _current: 0
+  _min: 0
+  _max: 0
+  _origin: {x: 0, y: 0, z: 0}
+  _velocity: {x: 0, y: 0, z: 0}
+  _radius: 0
+  _impact: 0
+  _start: 0
+  _duration: 0
+  _progress: 0
 --- !u!198 &198189822879583698
 ParticleSystem:
   m_ObjectHideFlags: 1

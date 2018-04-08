@@ -347,10 +347,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Gravity: 20
   GravityAccel: 9
+  IsReplayMovement: 0
   JumpHeight: 8
   RunSpeed: 8
   Speed: 6
-  IsReplayMovement: 0
 --- !u!114 &114840291142834970
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -413,17 +413,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1406003094462680}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 763f413c289e6eb42bd1e3f6a0bbccc6, type: 3}
+  m_Script: {fileID: 11500000, guid: 70f6a73ff23cc2648a99f5502f3f0115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FireOrigin: {fileID: 1958092121594272}
-  FireInterval: 0.5
-  FireVelocity: 500
-  HealthImpact: 0
-  Projectile: {fileID: 1624454853123306, guid: 5b86d732c652bf641a5e1e9353539450, type: 2}
-  ProjectileLifetime: 10
-  ImpactForce: 0
-  ExplosionRadius: 10
+  _fireInterval: 5
+  _fireOrigin: {fileID: 1958092121594272}
+  _fireVelocity: 500
+  _lastShot: 0
+  _object: {fileID: 1624454853123306, guid: 5b86d732c652bf641a5e1e9353539450, type: 2}
+  _impactForce: 50
+  _projectileLifetime: 5
 --- !u!136 &136902072091971096
 CapsuleCollider:
   m_ObjectHideFlags: 1

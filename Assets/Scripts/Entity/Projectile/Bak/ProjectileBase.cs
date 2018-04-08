@@ -5,7 +5,7 @@ using UnityEngine;
 
 #endregion
 
-namespace DemoGame.Entity.Projectile
+namespace DemoGame.Entity.Projectile.bak
 {
     public delegate void WeaponProjectileCallback(ProjectileBase projectile);
 

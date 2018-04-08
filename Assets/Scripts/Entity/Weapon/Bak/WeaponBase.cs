@@ -5,7 +5,7 @@ using UnityEngine;
 
 #endregion
 
-namespace DemoGame.Entity.Weapon
+namespace DemoGame.Entity.Weapon.bak
 {
     public abstract class WeaponBase : MonoBehaviour
     {
